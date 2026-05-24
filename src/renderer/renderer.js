@@ -22,6 +22,7 @@ const elements = {
   accountList: document.querySelector('#accountList'),
   accountFilterReady: document.querySelector('#accountFilterReady'),
   accountFilterAll: document.querySelector('#accountFilterAll'),
+  accountFilterUnavailable: document.querySelector('#accountFilterUnavailable'),
   configPanel: document.querySelector('#configPanel'),
   configState: document.querySelector('#configState'),
   baseUrlInput: document.querySelector('#baseUrlInput'),
@@ -74,6 +75,7 @@ const translations = {
     accountDetails: 'Plus 账号明细',
     filterReady: '可用',
     filterAll: '全部',
+    filterUnavailable: '不可用',
     noAccounts: '没有匹配账号',
     refresh: '刷新',
     activity: '刷新记录',
@@ -107,7 +109,9 @@ const translations = {
     unknownModels: '未知模型',
     refreshFailed: '刷新失败',
     refreshed: 'CLIProxyAPI 已刷新',
-    configRequired: '需要配置'
+    configRequired: '需要配置',
+    waitingRefresh: '已配置，等待首次刷新',
+    waitingConfig: '等待 CLIProxyAPI 配置'
   },
   en: {
     normal: 'Normal',
@@ -134,6 +138,7 @@ const translations = {
     accountDetails: 'Plus accounts',
     filterReady: 'Ready',
     filterAll: 'All',
+    filterUnavailable: 'Unavailable',
     noAccounts: 'No matching accounts',
     refresh: 'Refresh',
     activity: 'Refresh log',
@@ -167,7 +172,9 @@ const translations = {
     unknownModels: 'unknown models',
     refreshFailed: 'Refresh failed',
     refreshed: 'CLIProxyAPI refreshed',
-    configRequired: 'Configuration required'
+    configRequired: 'Configuration required',
+    waitingRefresh: 'Configured, waiting for first refresh',
+    waitingConfig: 'Waiting for CLIProxyAPI configuration'
   }
 };
 
@@ -233,6 +240,10 @@ elements.accountFilterAll.addEventListener('click', () => {
   setAccountFilter('all');
 });
 
+elements.accountFilterUnavailable.addEventListener('click', () => {
+  setAccountFilter('unavailable');
+});
+
 function render(snapshot) {
   if (!snapshot) return;
   lastSnapshot = snapshot;
@@ -246,7 +257,7 @@ function render(snapshot) {
   if (!snapshot.configured) {
     setConfigMessage('needConfig');
   } else if (snapshot.events[0]?.label === 'CLIProxyAPI refresh failed') {
-    setConfigMessageText(snapshot.events[0].detail);
+    setConfigMessageText(eventDetail(snapshot.events[0].detail, snapshot.configured));
   }
 
   elements.codexPercent.textContent = `${snapshot.pool.effectivePercent}%`;
@@ -329,12 +340,10 @@ function createAccountItem(account) {
 
 function renderAccounts(snapshot) {
   const accounts = Array.isArray(snapshot.accounts) ? snapshot.accounts : [];
-  const visibleAccounts = accountFilter === 'ready'
-    ? accounts.filter((account) => account.available)
-    : accounts;
+  const visibleAccounts = accounts.filter((account) => accountVisible(account));
 
   elements.accountSummary.textContent =
-    `${visibleAccounts.length}/${accounts.length} ${accountFilter === 'ready' ? t('filterReady') : t('filterAll')}`;
+    `${visibleAccounts.length}/${accounts.length} ${accountFilterLabel()}`;
   elements.accountList.replaceChildren(
     ...(visibleAccounts.length
       ? visibleAccounts.map((account) => createAccountItem(account))
@@ -350,12 +359,30 @@ function createEmptyAccountItem() {
 }
 
 function setAccountFilter(nextFilter) {
-  accountFilter = nextFilter === 'all' ? 'all' : 'ready';
+  accountFilter = nextFilter === 'all' || nextFilter === 'unavailable'
+    ? nextFilter
+    : 'ready';
   elements.accountFilterReady.classList.toggle('is-active', accountFilter === 'ready');
   elements.accountFilterAll.classList.toggle('is-active', accountFilter === 'all');
+  elements.accountFilterUnavailable.classList.toggle(
+    'is-active',
+    accountFilter === 'unavailable'
+  );
   if (lastSnapshot) {
     render(lastSnapshot);
   }
+}
+
+function accountVisible(account) {
+  if (accountFilter === 'all') return true;
+  if (accountFilter === 'unavailable') return !account.available;
+  return account.available;
+}
+
+function accountFilterLabel() {
+  if (accountFilter === 'all') return t('filterAll');
+  if (accountFilter === 'unavailable') return t('filterUnavailable');
+  return t('filterReady');
 }
 
 function renderUsage(usage) {
@@ -511,6 +538,14 @@ function eventLabel(label) {
   if (label === 'CLIProxyAPI refreshed') return t('refreshed');
   if (label === 'Configuration required') return t('configRequired');
   return label;
+}
+
+function eventDetail(detail, configured) {
+  if (detail === 'Waiting for first quota refresh') return t('waitingRefresh');
+  if (detail === 'Waiting for CLIProxyAPI configuration') {
+    return configured ? t('waitingRefresh') : t('waitingConfig');
+  }
+  return detail;
 }
 
 function locale() {

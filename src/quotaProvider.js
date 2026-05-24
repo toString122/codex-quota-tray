@@ -6,9 +6,12 @@ const REQUEST_TIMEOUT_MS = 20000;
 class CLIProxyAPIQuotaProvider {
   constructor(configStore) {
     this.configStore = configStore;
+    const configured = configStore.getProviderConfig().configured;
     this.snapshot = createEmptySnapshot({
-      configured: configStore.getProviderConfig().configured,
-      message: 'Waiting for CLIProxyAPI configuration'
+      configured,
+      message: configured
+        ? 'Waiting for first quota refresh'
+        : 'Waiting for CLIProxyAPI configuration'
     });
   }
 

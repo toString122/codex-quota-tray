@@ -413,7 +413,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 999px;
   display: inline-grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   padding: 2px;
 }
 
