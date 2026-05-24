@@ -10,13 +10,17 @@
     <button class="status-strip" id="statusStrip" type="button" aria-label="打开 Codex 余量面板">
       <span class="status-light" aria-hidden="true"></span>
       <span class="status-lines">
-        <span class="line">
+        <span class="status-line">
           <strong>5H</strong>
           <span id="fiveHourText">--%</span>
-        </span>
-        <span class="line">
           <strong>Week</strong>
           <span id="weeklyText">--%</span>
+        </span>
+        <span class="status-line usage-line">
+          <strong>Tok</strong>
+          <span id="todayTokensText">--</span>
+          <strong>$</strong>
+          <span id="todayCostText">--</span>
         </span>
       </span>
       <span class="status-badge" id="statusBadge">OK</span>

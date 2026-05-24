@@ -3,6 +3,8 @@
 const elements = {
   fiveHourText: document.querySelector('#fiveHourText'),
   weeklyText: document.querySelector('#weeklyText'),
+  todayTokensText: document.querySelector('#todayTokensText'),
+  todayCostText: document.querySelector('#todayCostText'),
   statusBadge: document.querySelector('#statusBadge'),
   statusStrip: document.querySelector('#statusStrip')
 };
@@ -30,12 +32,16 @@ function render(snapshot) {
   if (!snapshot.configured) {
     elements.fiveHourText.textContent = activeConfig.language === 'en' ? 'URL' : '地址';
     elements.weeklyText.textContent = activeConfig.language === 'en' ? 'Key' : '密钥';
+    elements.todayTokensText.textContent = '--';
+    elements.todayCostText.textContent = '--';
     elements.statusBadge.textContent = 'SET';
     return;
   }
 
   elements.fiveHourText.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.weeklyText.textContent = `${snapshot.pool.weekly.remainingPercent}%`;
+  elements.todayTokensText.textContent = formatCompactTokens(snapshot.usage);
+  elements.todayCostText.textContent = formatCompactUsd(snapshot.usage);
   elements.statusBadge.textContent =
     `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`;
 }
@@ -65,4 +71,24 @@ function normalizeOpacity(value) {
 
 function formatAlpha(value) {
   return String(Number(value.toFixed(3)));
+}
+
+function formatCompactTokens(usage) {
+  if (!usage?.enabled) return 'off';
+  const totalTokens = Number(usage.today?.totalTokens || 0);
+  if (totalTokens >= 1_000_000) return `${trimCompact(totalTokens / 1_000_000)}M`;
+  if (totalTokens >= 1_000) return `${trimCompact(totalTokens / 1_000)}K`;
+  return String(Math.round(totalTokens));
+}
+
+function formatCompactUsd(usage) {
+  if (!usage?.enabled) return '--';
+  const usd = Number(usage.today?.estimatedUsd || 0);
+  if (usd > 0 && usd < 0.01) return '<.01';
+  if (usd >= 100) return String(Math.round(usd));
+  return usd.toFixed(2);
+}
+
+function trimCompact(value) {
+  return value >= 10 ? String(Math.round(value)) : value.toFixed(1);
 }

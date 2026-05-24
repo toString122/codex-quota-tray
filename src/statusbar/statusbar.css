@@ -68,35 +68,40 @@ body {
   min-width: 0;
 }
 
-.line {
+.status-line {
   align-items: baseline;
   display: grid;
   gap: 4px;
-  grid-template-columns: 28px 1fr;
+  grid-template-columns: 18px 30px 28px 1fr;
   min-width: 0;
 }
 
-.line strong {
+.status-line strong {
   color: var(--muted);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   line-height: 1;
 }
 
-.line span,
+.status-line span,
 .status-badge {
   font-family: "Cascadia Code", Consolas, monospace;
   letter-spacing: 0;
 }
 
-.line span {
+.status-line span {
   color: var(--ink);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.usage-line strong,
+.usage-line span {
+  font-size: 9px;
 }
 
 .status-badge {

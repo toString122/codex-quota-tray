@@ -13,6 +13,7 @@ const MAX_REFRESH_INTERVAL_SECONDS = 3600;
 const DEFAULT_LANGUAGE = 'zh';
 const DEFAULT_STATUS_BAR_POSITION = 'bottom-right';
 const DEFAULT_STATUS_BAR_OPACITY = 0.88;
+const DEFAULT_USAGE_STATS_ENABLED = false;
 
 class ConfigStore {
   constructor(userDataPath) {
@@ -28,6 +29,7 @@ class ConfigStore {
       ),
       autoRefreshEnabled: this.getAutoRefreshEnabled(),
       refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
+      usageStatsEnabled: this.getUsageStatsEnabled(),
       language: this.getLanguage(),
       statusBarPosition: this.getStatusBarPosition(),
       statusBarOpacity: this.getStatusBarOpacity()
@@ -46,6 +48,7 @@ class ConfigStore {
       managementKey,
       autoRefreshEnabled: this.getAutoRefreshEnabled(),
       refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
+      usageStatsEnabled: this.getUsageStatsEnabled(),
       language: this.getLanguage(),
       statusBarPosition: this.getStatusBarPosition(),
       statusBarOpacity: this.getStatusBarOpacity(),
@@ -62,6 +65,7 @@ class ConfigStore {
     this.config.refreshIntervalSeconds = normalizeRefreshInterval(
       nextConfig.refreshIntervalSeconds
     );
+    this.config.usageStatsEnabled = nextConfig.usageStatsEnabled === true;
     this.config.language = normalizeLanguage(nextConfig.language);
     this.config.statusBarPosition = normalizeStatusBarPosition(
       nextConfig.statusBarPosition
@@ -123,6 +127,13 @@ class ConfigStore {
     return normalizeRefreshInterval(this.config.refreshIntervalSeconds);
   }
 
+  getUsageStatsEnabled() {
+    if (typeof this.config.usageStatsEnabled === 'boolean') {
+      return this.config.usageStatsEnabled;
+    }
+    return DEFAULT_USAGE_STATS_ENABLED;
+  }
+
   getLanguage() {
     return normalizeLanguage(this.config.language);
   }
@@ -179,6 +190,7 @@ module.exports = {
   DEFAULT_BASE_URL,
   DEFAULT_REFRESH_INTERVAL_SECONDS,
   MIN_REFRESH_INTERVAL_SECONDS,
+  DEFAULT_USAGE_STATS_ENABLED,
   DEFAULT_LANGUAGE,
   DEFAULT_STATUS_BAR_POSITION,
   DEFAULT_STATUS_BAR_OPACITY

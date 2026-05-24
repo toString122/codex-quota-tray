@@ -14,6 +14,10 @@ const elements = {
   codexUsed: document.querySelector('#codexUsed'),
   codexBar: document.querySelector('#codexBar'),
   codexLimit: document.querySelector('#codexLimit'),
+  todayTokens: document.querySelector('#todayTokens'),
+  todayTokensDetail: document.querySelector('#todayTokensDetail'),
+  todayCost: document.querySelector('#todayCost'),
+  todayCostDetail: document.querySelector('#todayCostDetail'),
   accountSummary: document.querySelector('#accountSummary'),
   accountList: document.querySelector('#accountList'),
   configPanel: document.querySelector('#configPanel'),
@@ -21,6 +25,8 @@ const elements = {
   baseUrlInput: document.querySelector('#baseUrlInput'),
   managementKeyInput: document.querySelector('#managementKeyInput'),
   autoRefreshInput: document.querySelector('#autoRefreshInput'),
+  usageStatsInput: document.querySelector('#usageStatsInput'),
+  usagePollInput: document.querySelector('#usagePollInput'),
   refreshIntervalInput: document.querySelector('#refreshIntervalInput'),
   statusBarPositionInput: document.querySelector('#statusBarPositionInput'),
   languageInput: document.querySelector('#languageInput'),
@@ -46,6 +52,8 @@ const translations = {
     baseUrl: 'Management API 地址',
     managementKey: '管理密钥',
     autoRefresh: '自动刷新',
+    usageStats: '今日统计',
+    usagePoll: '用量采集',
     refreshInterval: '刷新间隔（秒）',
     position: '状态条位置',
     language: '语言',
@@ -77,7 +85,15 @@ const translations = {
     ready: '可用',
     limited: '受限',
     quotaUnknown: '额度未知',
-    opacity: '背景透明度'
+    opacity: '背景透明度',
+    todayTokens: '今日 Tokens',
+    todayCost: '今日金额',
+    usageStatsOff: '未开启今日统计',
+    usageStatsOn: '每 30 秒读取 usage queue',
+    estimated: '估算',
+    requests: '请求',
+    priced: '已计价',
+    unknownModels: '未知模型'
   },
   en: {
     normal: 'Normal',
@@ -87,6 +103,8 @@ const translations = {
     baseUrl: 'Management API URL',
     managementKey: 'Management key',
     autoRefresh: 'Auto refresh',
+    usageStats: 'Today stats',
+    usagePoll: 'Usage poll',
     refreshInterval: 'Refresh interval (sec)',
     position: 'Status position',
     language: 'Language',
@@ -118,7 +136,15 @@ const translations = {
     ready: 'ready',
     limited: 'limited',
     quotaUnknown: 'quota unknown',
-    opacity: 'Background opacity'
+    opacity: 'Background opacity',
+    todayTokens: 'Today tokens',
+    todayCost: 'Today cost',
+    usageStatsOff: 'Today stats are off',
+    usageStatsOn: 'Reads usage queue every 30 seconds',
+    estimated: 'estimated',
+    requests: 'requests',
+    priced: 'priced',
+    unknownModels: 'unknown models'
   }
 };
 
@@ -139,6 +165,7 @@ elements.saveConfigButton.addEventListener('click', async () => {
       baseUrl: elements.baseUrlInput.value,
       managementKey: elements.managementKeyInput.value,
       autoRefreshEnabled: elements.autoRefreshInput.checked,
+      usageStatsEnabled: elements.usageStatsInput.checked,
       refreshIntervalSeconds: elements.refreshIntervalInput.value,
       statusBarPosition: elements.statusBarPositionInput.value,
       statusBarOpacity: Number(elements.statusBarOpacityInput.value) / 100,
@@ -205,6 +232,7 @@ function render(snapshot) {
   elements.codexBar.style.width = `${snapshot.pool.weekly.remainingPercent}%`;
   elements.codexLimit.textContent =
     `${t('nextReset')} ${formatMaybeShortDate(snapshot.pool.weekly.nextResetAt)}`;
+  renderUsage(snapshot.usage);
 
   elements.accountSummary.textContent =
     `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ready`;
@@ -224,6 +252,8 @@ function renderConfig(config) {
   activeLanguage = config.language === 'en' ? 'en' : 'zh';
   elements.baseUrlInput.value = config.baseUrl || '';
   elements.autoRefreshInput.checked = config.autoRefreshEnabled !== false;
+  elements.usageStatsInput.checked = config.usageStatsEnabled === true;
+  elements.usagePollInput.value = '30 sec';
   elements.refreshIntervalInput.value = String(config.refreshIntervalSeconds || 300);
   elements.statusBarPositionInput.value = config.statusBarPosition || 'bottom-right';
   elements.languageInput.value = activeLanguage;
@@ -261,6 +291,30 @@ function createAccountItem(account) {
   return item;
 }
 
+function renderUsage(usage) {
+  if (!usage?.enabled) {
+    elements.todayTokens.textContent = '--';
+    elements.todayTokensDetail.textContent = t('usageStatsOff');
+    elements.todayCost.textContent = '--';
+    elements.todayCostDetail.textContent = t('usageStatsOn');
+    return;
+  }
+
+  const today = usage.today || {};
+  elements.todayTokens.textContent = formatTokens(today.totalTokens);
+  elements.todayTokensDetail.textContent =
+    `in ${formatTokens(today.inputTokens)} / out ${formatTokens(today.outputTokens)}`;
+  elements.todayCost.textContent = formatUsd(today.estimatedUsd);
+  elements.todayCostDetail.textContent =
+    `${t('estimated')} · ${t('requests')} ${today.requestCount || 0} · ${t('priced')} ${today.pricedRequestCount || 0}/${today.requestCount || 0}`;
+
+  if (usage.error) {
+    elements.todayCostDetail.textContent = usage.error;
+  } else if (today.unknownModelCount > 0) {
+    elements.todayCostDetail.textContent += ` · ${t('unknownModels')} ${today.unknownModelCount}`;
+  }
+}
+
 function applyLanguage() {
   document.documentElement.lang = activeLanguage === 'en' ? 'en' : 'zh-CN';
   document.querySelectorAll('[data-i18n]').forEach((node) => {
@@ -278,6 +332,25 @@ function applyLanguage() {
 function updateOpacityLabel() {
   elements.opacityLabel.textContent =
     `${t('opacity')} ${elements.statusBarOpacityInput.value || 88}%`;
+}
+
+function formatTokens(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return '0';
+  if (number >= 1_000_000) return `${trimNumber(number / 1_000_000)}M`;
+  if (number >= 1_000) return `${trimNumber(number / 1_000)}K`;
+  return String(Math.round(number));
+}
+
+function formatUsd(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '$--';
+  if (number > 0 && number < 0.01) return '$<0.01';
+  return `$${number.toFixed(2)}`;
+}
+
+function trimNumber(value) {
+  return value >= 10 ? String(Math.round(value)) : value.toFixed(1);
 }
 
 function statusLabel(status) {

@@ -426,5 +426,6 @@ function clamp(value, min, max) {
 }
 
 module.exports = {
-  CLIProxyAPIQuotaProvider
+  CLIProxyAPIQuotaProvider,
+  managementFetch
 };

@@ -12,24 +12,35 @@ const {
   shell
 } = require('electron');
 const { ConfigStore } = require('./configStore');
-const { CLIProxyAPIQuotaProvider } = require('./quotaProvider');
+const { CLIProxyAPIQuotaProvider, managementFetch } = require('./quotaProvider');
 const { createQuotaTrayImage } = require('./trayIcon');
+const { UsageStatsStore } = require('./usageStatsStore');
 
 let configStore = null;
 let provider = null;
+let usageStatsStore = null;
 let tray = null;
 let window = null;
 let statusBarWindow = null;
 let snapshot = null;
 let refreshTimer = null;
+let usageStatsTimer = null;
 let refreshInFlight = false;
+let usageStatsInFlight = false;
+let usageStatsRuntime = {
+  telemetryEnabled: null,
+  lastPollAt: null,
+  error: ''
+};
 let notifiedStatus = 'good';
 let statusBarVisible = true;
 
 const STATUS_BAR_SIZE = {
-  width: 150,
-  height: 32
+  width: 186,
+  height: 34
 };
+const USAGE_STATS_POLL_INTERVAL_MS = 30_000;
+const USAGE_QUEUE_COUNT = 500;
 
 const gotLock = app.requestSingleInstanceLock();
 
@@ -43,8 +54,9 @@ if (!gotLock) {
   app.whenReady().then(() => {
     app.setAppUserModelId('local.codex-quota-tray');
     configStore = new ConfigStore(app.getPath('userData'));
+    usageStatsStore = new UsageStatsStore(app.getPath('userData'));
     provider = new CLIProxyAPIQuotaProvider(configStore);
-    snapshot = provider.getSnapshot();
+    snapshot = attachUsageStats(provider.getSnapshot());
     createTray();
     createWindow();
     createStatusBarWindow();
@@ -53,6 +65,7 @@ if (!gotLock) {
     }
     void updateQuota('startup');
     scheduleAutoRefresh();
+    scheduleUsageStatsPolling();
     screen.on('display-metrics-changed', positionStatusBar);
   });
 }
@@ -60,6 +73,7 @@ if (!gotLock) {
 app.on('before-quit', () => {
   app.isQuitting = true;
   if (refreshTimer) clearInterval(refreshTimer);
+  if (usageStatsTimer) clearInterval(usageStatsTimer);
 });
 
 function createTray() {
@@ -147,7 +161,7 @@ async function updateQuota(reason) {
 
   refreshInFlight = true;
   try {
-    snapshot = await provider.refresh();
+    snapshot = attachUsageStats(await provider.refresh());
     renderSnapshot();
 
     if (reason !== 'startup') {
@@ -161,6 +175,8 @@ async function updateQuota(reason) {
 }
 
 function renderSnapshot() {
+  snapshot = attachUsageStats(snapshot);
+
   if (tray) {
     tray.setImage(createQuotaTrayImage(getTrayPercent(snapshot), snapshot.status));
     tray.setToolTip(formatTooltip(snapshot));
@@ -195,6 +211,14 @@ function rebuildTrayMenu() {
       label: `${t('availableAccounts')} ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`,
       enabled: false
     },
+    ...(publicConfig.usageStatsEnabled
+      ? [
+          {
+            label: `${t('todayUsage')}: ${formatTokens(snapshot.usage.today.totalTokens)} / ${formatUsd(snapshot.usage.today.estimatedUsd)}`,
+            enabled: false
+          }
+        ]
+      : []),
     {
       label: publicConfig.autoRefreshEnabled
         ? `${t('autoRefresh')}: ${formatInterval(publicConfig.refreshIntervalSeconds)}`
@@ -312,7 +336,7 @@ function getTrayPercent(nextSnapshot) {
   return nextSnapshot?.pool?.effectivePercent ?? nextSnapshot?.codex?.percentRemaining ?? 0;
 }
 
-ipcMain.handle('quota:get', () => snapshot);
+ipcMain.handle('quota:get', () => attachUsageStats(snapshot));
 
 ipcMain.handle('quota:refresh', () => {
   return updateQuota('manual');
@@ -325,11 +349,14 @@ ipcMain.handle('config:get', () => {
 ipcMain.handle('config:save', async (_event, nextConfig) => {
   configStore.save(nextConfig || {});
   scheduleAutoRefresh();
+  scheduleUsageStatsPolling();
   broadcastConfig();
   positionStatusBar();
+  await updateQuota('config');
+  await refreshUsageStats('config');
   return {
     config: configStore.getPublicConfig(),
-    snapshot: await updateQuota('config')
+    snapshot
   };
 });
 
@@ -384,6 +411,118 @@ function scheduleAutoRefresh() {
   }
 }
 
+function scheduleUsageStatsPolling() {
+  if (usageStatsTimer) {
+    clearInterval(usageStatsTimer);
+    usageStatsTimer = null;
+  }
+
+  const publicConfig = configStore.getPublicConfig();
+  if (!publicConfig.usageStatsEnabled || !publicConfig.hasManagementKey) {
+    usageStatsRuntime = {
+      telemetryEnabled: null,
+      lastPollAt: null,
+      error: ''
+    };
+    snapshot = attachUsageStats(snapshot);
+    return;
+  }
+
+  usageStatsTimer = setInterval(() => {
+    void refreshUsageStats('timer');
+  }, USAGE_STATS_POLL_INTERVAL_MS);
+  void refreshUsageStats('startup');
+}
+
+async function refreshUsageStats(reason) {
+  if (usageStatsInFlight) return snapshot?.usage || null;
+
+  const config = configStore.getProviderConfig();
+  if (!config.configured || !config.usageStatsEnabled) {
+    snapshot = attachUsageStats(snapshot);
+    return snapshot?.usage || null;
+  }
+
+  usageStatsInFlight = true;
+  try {
+    await ensureUsageStatisticsEnabled(config);
+    const response = await managementFetch(
+      config,
+      `/v0/management/usage-queue?count=${USAGE_QUEUE_COUNT}`
+    );
+    const records = usageRecordsFromQueueResponse(response);
+    const added = usageStatsStore.ingest(records);
+
+    usageStatsRuntime = {
+      telemetryEnabled: true,
+      lastPollAt: new Date().toISOString(),
+      error: ''
+    };
+    snapshot = attachUsageStats(snapshot);
+
+    if (added > 0 || reason !== 'timer') {
+      renderSnapshot();
+    }
+
+    return snapshot.usage;
+  } catch (error) {
+    usageStatsRuntime = {
+      ...usageStatsRuntime,
+      lastPollAt: new Date().toISOString(),
+      error: error.message || 'Failed to refresh usage statistics'
+    };
+    snapshot = attachUsageStats(snapshot);
+    renderSnapshot();
+    return snapshot.usage;
+  } finally {
+    usageStatsInFlight = false;
+  }
+}
+
+async function ensureUsageStatisticsEnabled(config) {
+  const response = await managementFetch(
+    config,
+    '/v0/management/usage-statistics-enabled'
+  );
+  const enabled = Boolean(
+    response['usage-statistics-enabled'] ?? response.enabled ?? response.value
+  );
+  usageStatsRuntime.telemetryEnabled = enabled;
+
+  if (!enabled) {
+    await managementFetch(config, '/v0/management/usage-statistics-enabled', {
+      method: 'PUT',
+      body: {
+        value: true
+      }
+    });
+    usageStatsRuntime.telemetryEnabled = true;
+  }
+}
+
+function usageRecordsFromQueueResponse(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response.queue)) return response.queue;
+  if (Array.isArray(response.records)) return response.records;
+  if (Array.isArray(response.items)) return response.items;
+  if (Array.isArray(response.data)) return response.data;
+  if (Array.isArray(response.usage_queue)) return response.usage_queue;
+  if (Array.isArray(response.usage_entries)) return response.usage_entries;
+  if (Array.isArray(response.usages)) return response.usages;
+  return [];
+}
+
+function attachUsageStats(nextSnapshot) {
+  if (!nextSnapshot || !usageStatsStore || !configStore) return nextSnapshot;
+  return {
+    ...nextSnapshot,
+    usage: usageStatsStore.getTodaySnapshot({
+      enabled: configStore.getPublicConfig().usageStatsEnabled,
+      ...usageStatsRuntime
+    })
+  };
+}
+
 function broadcastConfig() {
   const publicConfig = configStore.getPublicConfig();
   if (window && !window.isDestroyed()) {
@@ -401,6 +540,25 @@ function formatInterval(seconds) {
   return `${seconds} ${t('seconds')}`;
 }
 
+function formatTokens(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return '0';
+  if (number >= 1_000_000) return `${trimNumber(number / 1_000_000)}M`;
+  if (number >= 1_000) return `${trimNumber(number / 1_000)}K`;
+  return String(Math.round(number));
+}
+
+function formatUsd(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '$--';
+  if (number > 0 && number < 0.01) return '$<0.01';
+  return `$${number.toFixed(2)}`;
+}
+
+function trimNumber(value) {
+  return value >= 10 ? String(Math.round(value)) : value.toFixed(1);
+}
+
 function normalizePreviewOpacity(value) {
   const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed)) return 0.88;
@@ -413,6 +571,7 @@ function t(key) {
     zh: {
       remaining: '池剩余',
       availableAccounts: '可用账号',
+      todayUsage: '今日用量',
       autoRefresh: '自动刷新',
       off: '关闭',
       showPanel: '显示状态面板',
@@ -431,6 +590,7 @@ function t(key) {
     en: {
       remaining: 'remaining',
       availableAccounts: 'Available accounts',
+      todayUsage: 'Today usage',
       autoRefresh: 'Auto refresh',
       off: 'off',
       showPanel: 'Show panel',

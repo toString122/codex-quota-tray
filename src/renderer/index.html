@@ -37,9 +37,19 @@
             <input id="autoRefreshInput" type="checkbox">
             <span data-i18n="autoRefresh">自动刷新</span>
           </label>
+          <label class="toggle-row">
+            <input id="usageStatsInput" type="checkbox">
+            <span data-i18n="usageStats">今日统计</span>
+          </label>
+        </div>
+        <div class="refresh-options">
           <label>
             <span data-i18n="refreshInterval">刷新间隔（秒）</span>
             <input id="refreshIntervalInput" type="number" min="60" max="3600" step="30" inputmode="numeric">
+          </label>
+          <label>
+            <span data-i18n="usagePoll">用量采集</span>
+            <input id="usagePollInput" type="text" value="30 sec" readonly>
           </label>
         </div>
         <div class="ui-options">
@@ -105,6 +115,22 @@
             <span id="codexBar"></span>
           </div>
           <p id="codexLimit">Next reset --</p>
+        </article>
+
+        <article class="metric">
+          <div class="metric-head">
+            <span data-i18n="todayTokens">今日 Tokens</span>
+            <strong id="todayTokens">--</strong>
+          </div>
+          <p id="todayTokensDetail">--</p>
+        </article>
+
+        <article class="metric">
+          <div class="metric-head">
+            <span data-i18n="todayCost">今日金额</span>
+            <strong id="todayCost">--</strong>
+          </div>
+          <p id="todayCostDetail">--</p>
         </article>
       </section>
 
