@@ -14,6 +14,8 @@ const elements = {
   codexUsed: document.querySelector('#codexUsed'),
   codexBar: document.querySelector('#codexBar'),
   codexLimit: document.querySelector('#codexLimit'),
+  accountSummary: document.querySelector('#accountSummary'),
+  accountList: document.querySelector('#accountList'),
   updatedAt: document.querySelector('#updatedAt'),
   eventList: document.querySelector('#eventList'),
   refreshButton: document.querySelector('#refreshButton'),
@@ -60,28 +62,60 @@ function render(snapshot) {
   document.body.classList.add(statusClass);
 
   elements.statusText.textContent = statusLabels[snapshot.status] || 'Normal';
-  elements.codexPercent.textContent = `${snapshot.codex.percentRemaining}%`;
+  elements.codexPercent.textContent = `${snapshot.pool.effectivePercent}%`;
   elements.codexMeter.style.setProperty(
     '--value',
-    `${snapshot.codex.percentRemaining * 3.6}deg`
+    `${snapshot.pool.effectivePercent * 3.6}deg`
   );
-  elements.codexRemaining.textContent = `${snapshot.codex.remaining} / ${snapshot.codex.limit}`;
-  elements.codexReset.textContent = `Reset ${formatTime(snapshot.codex.resetAt)}`;
+  elements.codexRemaining.textContent =
+    `5H ${snapshot.pool.fiveHour.remainingPercent}% / 周 ${snapshot.pool.weekly.remainingPercent}%`;
+  elements.codexReset.textContent =
+    `可用账号 ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} · 瓶颈 ${snapshot.pool.bottleneck}`;
 
-  elements.apiPercent.textContent = `${snapshot.api.percentRemaining}%`;
-  elements.apiBar.style.width = `${snapshot.api.percentRemaining}%`;
+  elements.apiPercent.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
+  elements.apiBar.style.width = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.apiBudget.textContent =
-    `$${snapshot.api.remainingUsd.toFixed(2)} left / $${snapshot.api.budgetUsd.toFixed(2)}`;
+    `Next reset ${formatTime(snapshot.pool.fiveHour.nextResetAt)}`;
 
-  const usedPercent = Math.round((snapshot.codex.used / snapshot.codex.limit) * 100);
-  elements.codexUsed.textContent = `${snapshot.codex.used}`;
-  elements.codexBar.style.width = `${usedPercent}%`;
-  elements.codexLimit.textContent = `Limit ${snapshot.codex.limit}`;
+  elements.codexUsed.textContent = `${snapshot.pool.weekly.remainingPercent}%`;
+  elements.codexBar.style.width = `${snapshot.pool.weekly.remainingPercent}%`;
+  elements.codexLimit.textContent =
+    `Next reset ${formatShortDate(snapshot.pool.weekly.nextResetAt)}`;
+
+  elements.accountSummary.textContent =
+    `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ready`;
+  elements.accountList.replaceChildren(
+    ...snapshot.accounts.map((account) => createAccountItem(account))
+  );
 
   elements.updatedAt.textContent = formatClock(snapshot.updatedAt);
   elements.eventList.replaceChildren(
     ...snapshot.events.map((event) => createEventItem(event))
   );
+}
+
+function createAccountItem(account) {
+  const item = document.createElement('li');
+  item.className = 'account-row';
+
+  const identity = document.createElement('div');
+  const title = document.createElement('strong');
+  const detail = document.createElement('span');
+  const numbers = document.createElement('div');
+  const fiveHour = document.createElement('span');
+  const weekly = document.createElement('span');
+  const effective = document.createElement('time');
+
+  title.textContent = account.email;
+  detail.textContent = `${account.plan.toUpperCase()} · ${account.available ? 'ready' : 'limited'}`;
+  fiveHour.textContent = `5H ${account.fiveHour.remainingPercent}%`;
+  weekly.textContent = `周 ${account.weekly.remainingPercent}%`;
+  effective.textContent = `${account.effectiveRemainingPercent}%`;
+
+  identity.append(title, detail);
+  numbers.append(fiveHour, weekly, effective);
+  item.append(identity, numbers);
+  return item;
 }
 
 function createEventItem(event) {
@@ -112,5 +146,14 @@ function formatClock(value) {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
+  }).format(new Date(value));
+}
+
+function formatShortDate(value) {
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
   }).format(new Date(value));
 }

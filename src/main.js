@@ -55,7 +55,7 @@ app.on('before-quit', () => {
 });
 
 function createTray() {
-  tray = new Tray(createQuotaTrayImage(snapshot.codex.percentRemaining, snapshot.status));
+  tray = new Tray(createQuotaTrayImage(getTrayPercent(snapshot), snapshot.status));
   tray.setToolTip(formatTooltip(snapshot));
   tray.on('click', showWindow);
   tray.on('double-click', showWindow);
@@ -135,7 +135,7 @@ function updateQuota(reason) {
   snapshot = provider.getSnapshot();
 
   if (tray) {
-    tray.setImage(createQuotaTrayImage(snapshot.codex.percentRemaining, snapshot.status));
+    tray.setImage(createQuotaTrayImage(getTrayPercent(snapshot), snapshot.status));
     tray.setToolTip(formatTooltip(snapshot));
     rebuildTrayMenu();
   }
@@ -161,11 +161,15 @@ function updateQuota(reason) {
 function rebuildTrayMenu() {
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `Codex 剩余 ${snapshot.codex.percentRemaining}%`,
+      label: `5H 池剩余 ${snapshot.pool.fiveHour.remainingPercent}%`,
       enabled: false
     },
     {
-      label: `API 预算剩余 ${snapshot.api.percentRemaining}%`,
+      label: `周池剩余 ${snapshot.pool.weekly.remainingPercent}%`,
+      enabled: false
+    },
+    {
+      label: `可用账号 ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`,
       enabled: false
     },
     { type: 'separator' },
@@ -271,9 +275,14 @@ function maybeNotify(nextSnapshot) {
 
 function formatTooltip(nextSnapshot) {
   return [
-    `Codex 模拟余量：${nextSnapshot.codex.remaining}/${nextSnapshot.codex.limit} (${nextSnapshot.codex.percentRemaining}%)`,
-    `API 模拟预算：$${nextSnapshot.api.remainingUsd.toFixed(2)} / $${nextSnapshot.api.budgetUsd.toFixed(2)}`
+    `Codex Plus 账号池：有效 ${nextSnapshot.pool.effectivePercent}%`,
+    `5H：${nextSnapshot.pool.fiveHour.remainingPercent}% | 周：${nextSnapshot.pool.weekly.remainingPercent}%`,
+    `可用账号：${nextSnapshot.pool.availableAccounts}/${nextSnapshot.pool.totalAccounts}`
   ].join('\n');
+}
+
+function getTrayPercent(nextSnapshot) {
+  return nextSnapshot.pool?.effectivePercent ?? nextSnapshot.codex.percentRemaining;
 }
 
 ipcMain.handle('quota:get', () => snapshot);

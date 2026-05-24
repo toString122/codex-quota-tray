@@ -19,42 +19,50 @@
         </span>
       </header>
 
-      <section class="meter-section" aria-label="Codex quota overview">
+      <section class="meter-section" aria-label="Codex Plus pool overview">
         <div class="meter" id="codexMeter" style="--value: 0deg">
           <div class="meter-core">
             <span id="codexPercent">--%</span>
-            <small>Codex</small>
+            <small>有效</small>
           </div>
         </div>
         <div class="quota-copy">
-          <p class="label">ChatGPT Codex</p>
+          <p class="label">Codex Plus 账号池</p>
           <strong id="codexRemaining">-- / --</strong>
-          <span id="codexReset">Reset --</span>
+          <span id="codexReset">可用账号 --/--</span>
         </div>
       </section>
 
       <section class="metric-grid" aria-label="Quota metrics">
         <article class="metric">
           <div class="metric-head">
-            <span>API 预算</span>
+            <span>5H 池</span>
             <strong id="apiPercent">--%</strong>
           </div>
           <div class="bar">
             <span id="apiBar"></span>
           </div>
-          <p id="apiBudget">$-- / $--</p>
+          <p id="apiBudget">Next reset --</p>
         </article>
 
         <article class="metric">
           <div class="metric-head">
-            <span>Codex 消耗</span>
+            <span>周池</span>
             <strong id="codexUsed">--</strong>
           </div>
           <div class="bar">
             <span id="codexBar"></span>
           </div>
-          <p id="codexLimit">Limit --</p>
+          <p id="codexLimit">Next reset --</p>
         </article>
+      </section>
+
+      <section class="accounts" aria-label="Plus accounts">
+        <div class="section-title">
+          <span>Plus 账号明细</span>
+          <span id="accountSummary">--</span>
+        </div>
+        <ol class="account-list" id="accountList"></ol>
       </section>
 
       <section class="actions" aria-label="Actions">

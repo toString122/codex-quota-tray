@@ -1,16 +1,10 @@
 'use strict';
 
 const elements = {
-  codexText: document.querySelector('#codexText'),
-  apiText: document.querySelector('#apiText'),
+  fiveHourText: document.querySelector('#fiveHourText'),
+  weeklyText: document.querySelector('#weeklyText'),
   statusBadge: document.querySelector('#statusBadge'),
   statusStrip: document.querySelector('#statusStrip')
-};
-
-const statusLabels = {
-  good: 'OK',
-  warn: 'LOW',
-  danger: 'HOT'
 };
 
 window.codexQuota.onUpdate(render);
@@ -26,9 +20,8 @@ function render(snapshot) {
   document.body.classList.remove('status-good', 'status-warn', 'status-danger');
   document.body.classList.add(`status-${snapshot.status}`);
 
-  elements.codexText.textContent =
-    `${snapshot.codex.remaining}/${snapshot.codex.limit} (${snapshot.codex.percentRemaining}%)`;
-  elements.apiText.textContent =
-    `$${snapshot.api.remainingUsd.toFixed(2)} / $${snapshot.api.budgetUsd.toFixed(2)}`;
-  elements.statusBadge.textContent = statusLabels[snapshot.status] || 'OK';
+  elements.fiveHourText.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
+  elements.weeklyText.textContent = `${snapshot.pool.weekly.remainingPercent}%`;
+  elements.statusBadge.textContent =
+    `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`;
 }
