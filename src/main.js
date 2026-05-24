@@ -57,6 +57,7 @@ if (!gotLock) {
     usageStatsStore = new UsageStatsStore(app.getPath('userData'));
     provider = new CLIProxyAPIQuotaProvider(configStore);
     snapshot = attachUsageStats(provider.getSnapshot());
+    applyAutoLaunchSetting(configStore.getPublicConfig().autoLaunchEnabled);
     createTray();
     createWindow();
     createStatusBarWindow();
@@ -348,6 +349,7 @@ ipcMain.handle('config:get', () => {
 
 ipcMain.handle('config:save', async (_event, nextConfig) => {
   configStore.save(nextConfig || {});
+  applyAutoLaunchSetting(configStore.getPublicConfig().autoLaunchEnabled);
   scheduleAutoRefresh();
   scheduleUsageStatsPolling();
   broadcastConfig();
@@ -409,6 +411,17 @@ function scheduleAutoRefresh() {
   if (tray) {
     rebuildTrayMenu();
   }
+}
+
+function applyAutoLaunchSetting(enabled) {
+  if (process.platform !== 'win32') return;
+
+  app.setLoginItemSettings({
+    openAtLogin: Boolean(enabled),
+    name: 'Codex Quota Tray',
+    path: process.execPath,
+    args: app.isPackaged ? [] : [app.getAppPath()]
+  });
 }
 
 function scheduleUsageStatsPolling() {

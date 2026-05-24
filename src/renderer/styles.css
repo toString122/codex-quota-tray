@@ -140,6 +140,10 @@ input[type="range"] {
   grid-template-columns: 1fr 1fr;
 }
 
+.toggle-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .ui-options {
   display: grid;
   gap: 12px;
@@ -160,6 +164,7 @@ input[type="range"] {
 .toggle-row span {
   color: var(--ink) !important;
   font-size: 13px !important;
+  line-height: 1.15;
 }
 
 .config-actions {

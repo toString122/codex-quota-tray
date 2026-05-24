@@ -132,6 +132,7 @@ npx codex-quota-tray
 - `管理密钥`：CLIProxyAPI Management API key。
 - `自动刷新`：开启后按固定间隔刷新真实额度。
 - `今日统计`：开启后采集 usage queue 并汇总今日 token 和估算金额。
+- `开机自启`：开启后写入 Windows 登录项，系统启动后自动运行状态栏。
 - `刷新间隔`：真实额度刷新间隔，范围 60 到 3600 秒。
 - `状态条位置`：左上、右上、左下、右下。
 - `语言`：中文或 English。
@@ -324,6 +325,7 @@ npm install
 - 不要把你的 Management API key 提交到 GitHub。
 - 项目不会把管理密钥写入仓库。
 - 本地配置保存在 Electron `userData`。
+- 开机自启使用 Electron 登录项 API，只保存启动应用所需的本地路径，不会保存管理密钥。
 - 支持 `safeStorage` 时，管理密钥会加密保存。
 - 今日金额只是本地估算，不会读取 OpenAI 官方账单。
 

@@ -14,6 +14,7 @@ const DEFAULT_LANGUAGE = 'zh';
 const DEFAULT_STATUS_BAR_POSITION = 'bottom-right';
 const DEFAULT_STATUS_BAR_OPACITY = 0.88;
 const DEFAULT_USAGE_STATS_ENABLED = false;
+const DEFAULT_AUTO_LAUNCH_ENABLED = false;
 
 class ConfigStore {
   constructor(userDataPath) {
@@ -28,6 +29,7 @@ class ConfigStore {
         this.getManagementKey() || process.env.CLIPROXYAPI_MANAGEMENT_KEY
       ),
       autoRefreshEnabled: this.getAutoRefreshEnabled(),
+      autoLaunchEnabled: this.getAutoLaunchEnabled(),
       refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
       usageStatsEnabled: this.getUsageStatsEnabled(),
       language: this.getLanguage(),
@@ -47,6 +49,7 @@ class ConfigStore {
       baseUrl,
       managementKey,
       autoRefreshEnabled: this.getAutoRefreshEnabled(),
+      autoLaunchEnabled: this.getAutoLaunchEnabled(),
       refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
       usageStatsEnabled: this.getUsageStatsEnabled(),
       language: this.getLanguage(),
@@ -62,6 +65,7 @@ class ConfigStore {
 
     this.config.baseUrl = baseUrl;
     this.config.autoRefreshEnabled = nextConfig.autoRefreshEnabled !== false;
+    this.config.autoLaunchEnabled = nextConfig.autoLaunchEnabled === true;
     this.config.refreshIntervalSeconds = normalizeRefreshInterval(
       nextConfig.refreshIntervalSeconds
     );
@@ -121,6 +125,13 @@ class ConfigStore {
       return this.config.autoRefreshEnabled;
     }
     return DEFAULT_AUTO_REFRESH_ENABLED;
+  }
+
+  getAutoLaunchEnabled() {
+    if (typeof this.config.autoLaunchEnabled === 'boolean') {
+      return this.config.autoLaunchEnabled;
+    }
+    return DEFAULT_AUTO_LAUNCH_ENABLED;
   }
 
   getRefreshIntervalSeconds() {
@@ -191,6 +202,7 @@ module.exports = {
   DEFAULT_REFRESH_INTERVAL_SECONDS,
   MIN_REFRESH_INTERVAL_SECONDS,
   DEFAULT_USAGE_STATS_ENABLED,
+  DEFAULT_AUTO_LAUNCH_ENABLED,
   DEFAULT_LANGUAGE,
   DEFAULT_STATUS_BAR_POSITION,
   DEFAULT_STATUS_BAR_OPACITY

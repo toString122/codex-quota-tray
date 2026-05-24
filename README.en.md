@@ -132,6 +132,7 @@ The settings panel includes:
 - `Management key`: CLIProxyAPI Management API key.
 - `Auto refresh`: refreshes real quota on a timer.
 - `Today stats`: consumes the usage queue and summarizes daily tokens and estimated cost.
+- `Launch at startup`: writes a Windows login item so the status bar starts after sign-in.
 - `Refresh interval`: real quota refresh interval, from 60 to 3600 seconds.
 - `Status position`: top left, top right, bottom left, bottom right.
 - `Language`: Chinese or English.
@@ -324,6 +325,7 @@ Project files must use UTF-8 encoding. Editors should follow `.editorconfig`.
 - Do not commit your Management API key to GitHub.
 - The project does not write your management key into the repository.
 - Local settings are stored in Electron `userData`.
+- Launch at startup uses the Electron login item API and stores only the local app launch path, not your management key.
 - When `safeStorage` is available, the management key is encrypted.
 - Daily cost is a local estimate and does not read OpenAI official billing.
 

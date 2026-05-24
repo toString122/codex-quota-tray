@@ -27,6 +27,7 @@ const elements = {
   managementKeyInput: document.querySelector('#managementKeyInput'),
   autoRefreshInput: document.querySelector('#autoRefreshInput'),
   usageStatsInput: document.querySelector('#usageStatsInput'),
+  autoLaunchInput: document.querySelector('#autoLaunchInput'),
   usagePollInput: document.querySelector('#usagePollInput'),
   refreshIntervalInput: document.querySelector('#refreshIntervalInput'),
   statusBarPositionInput: document.querySelector('#statusBarPositionInput'),
@@ -57,6 +58,7 @@ const translations = {
     managementKey: '管理密钥',
     autoRefresh: '自动刷新',
     usageStats: '今日统计',
+    autoLaunch: '开机自启',
     usagePoll: '用量采集',
     refreshInterval: '刷新间隔（秒）',
     position: '状态条位置',
@@ -120,6 +122,7 @@ const translations = {
     managementKey: 'Management key',
     autoRefresh: 'Auto refresh',
     usageStats: 'Today stats',
+    autoLaunch: 'Launch at startup',
     usagePoll: 'Usage poll',
     refreshInterval: 'Refresh interval (sec)',
     position: 'Status position',
@@ -194,6 +197,7 @@ elements.saveConfigButton.addEventListener('click', async () => {
       managementKey: elements.managementKeyInput.value,
       autoRefreshEnabled: elements.autoRefreshInput.checked,
       usageStatsEnabled: elements.usageStatsInput.checked,
+      autoLaunchEnabled: elements.autoLaunchInput.checked,
       refreshIntervalSeconds: elements.refreshIntervalInput.value,
       statusBarPosition: elements.statusBarPositionInput.value,
       statusBarOpacity: Number(elements.statusBarOpacityInput.value) / 100,
@@ -290,6 +294,7 @@ function renderConfig(config) {
   elements.baseUrlInput.value = config.baseUrl || '';
   elements.autoRefreshInput.checked = config.autoRefreshEnabled !== false;
   elements.usageStatsInput.checked = config.usageStatsEnabled === true;
+  elements.autoLaunchInput.checked = config.autoLaunchEnabled === true;
   elements.usagePollInput.value = '30 sec';
   elements.refreshIntervalInput.value = String(config.refreshIntervalSeconds || 300);
   elements.statusBarPositionInput.value = config.statusBarPosition || 'bottom-right';
