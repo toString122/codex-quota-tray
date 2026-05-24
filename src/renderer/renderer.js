@@ -296,6 +296,10 @@ function createAccountItem(account) {
   const weekly = document.createElement('span');
   const effective = document.createElement('time');
 
+  identity.className = 'account-identity';
+  numbers.className = 'account-metrics';
+  fiveHour.className = 'account-metric';
+  weekly.className = 'account-metric';
   title.textContent = account.email;
   detail.textContent = account.quotaKnown
     ? `${account.plan.toUpperCase()} ${separator()} ${account.available ? t('ready') : t('limited')}`

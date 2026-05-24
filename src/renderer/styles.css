@@ -432,26 +432,67 @@ li time {
 }
 
 .account-list {
-  gap: 8px;
+  gap: 9px;
 }
 
 .account-row {
-  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 86px;
+  padding: 12px 16px;
 }
 
-.account-row > div:last-child {
-  align-items: center;
+.account-identity {
   display: grid;
   gap: 8px;
-  grid-template-columns: 54px 48px 42px;
+  min-width: 0;
+}
+
+.account-identity strong {
+  font-size: 17px;
+  line-height: 1.05;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-identity span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-metrics {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(56px, max-content) minmax(70px, max-content) 46px;
+  justify-content: end;
   justify-items: end;
+  min-width: 0;
+}
+
+.account-metric {
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(213, 221, 220, 0.86);
+  border-radius: 999px;
+  color: var(--muted);
+  padding: 5px 8px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .account-row time {
   background: rgba(39, 93, 159, 0.09);
   border-radius: 999px;
   color: var(--blue);
+  min-width: 46px;
   padding: 5px 7px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .status-warn {
@@ -498,5 +539,24 @@ li time {
 
   .actions {
     grid-template-columns: 1fr;
+  }
+
+  .account-row {
+    padding: 11px 12px;
+  }
+
+  .account-identity strong {
+    font-size: 15px;
+  }
+
+  .account-metrics {
+    gap: 6px;
+    grid-template-columns: minmax(52px, max-content) minmax(66px, max-content) 42px;
+  }
+
+  .account-metric,
+  .account-row time {
+    font-size: 10px;
+    padding-inline: 6px;
   }
 }
