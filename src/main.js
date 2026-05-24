@@ -27,8 +27,8 @@ let notifiedStatus = 'good';
 let statusBarVisible = true;
 
 const STATUS_BAR_SIZE = {
-  width: 330,
-  height: 52
+  width: 168,
+  height: 40
 };
 
 const gotLock = app.requestSingleInstanceLock();
@@ -126,6 +126,7 @@ function createStatusBarWindow() {
       statusBarWindow.showInactive();
     }
     statusBarWindow.webContents.send('quota:update', snapshot);
+    statusBarWindow.webContents.send('config:update', configStore.getPublicConfig());
   });
   statusBarWindow.on('closed', () => {
     statusBarWindow = null;
@@ -172,6 +173,7 @@ function renderSnapshot() {
 
   if (statusBarWindow && !statusBarWindow.isDestroyed()) {
     statusBarWindow.webContents.send('quota:update', snapshot);
+    statusBarWindow.webContents.send('config:update', configStore.getPublicConfig());
     if (statusBarVisible) {
       positionStatusBar();
     }
@@ -182,40 +184,40 @@ function rebuildTrayMenu() {
   const publicConfig = configStore.getPublicConfig();
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `5H 池剩余 ${snapshot.pool.fiveHour.remainingPercent}%`,
+      label: `5H ${t('remaining')} ${snapshot.pool.fiveHour.remainingPercent}%`,
       enabled: false
     },
     {
-      label: `Week 池剩余 ${snapshot.pool.weekly.remainingPercent}%`,
+      label: `Week ${t('remaining')} ${snapshot.pool.weekly.remainingPercent}%`,
       enabled: false
     },
     {
-      label: `可用账号 ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`,
+      label: `${t('availableAccounts')} ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`,
       enabled: false
     },
     {
       label: publicConfig.autoRefreshEnabled
-        ? `自动刷新：${formatInterval(publicConfig.refreshIntervalSeconds)}`
-        : '自动刷新：关闭',
+        ? `${t('autoRefresh')}: ${formatInterval(publicConfig.refreshIntervalSeconds)}`
+        : `${t('autoRefresh')}: ${t('off')}`,
       enabled: false
     },
     { type: 'separator' },
     {
-      label: '显示状态面板',
+      label: t('showPanel'),
       click: showWindow
     },
     {
-      label: '配置 CLIProxyAPI',
+      label: t('configureCliProxyApi'),
       click: showWindow
     },
     {
-      label: statusBarVisible ? '隐藏常驻文字' : '显示常驻文字',
+      label: statusBarVisible ? t('hideStatusText') : t('showStatusText'),
       type: 'checkbox',
       checked: statusBarVisible,
       click: (menuItem) => setStatusBarVisible(menuItem.checked)
     },
     {
-      label: '刷新真实额度',
+      label: t('refreshQuota'),
       click: () => {
         void updateQuota('manual');
       }
@@ -227,7 +229,7 @@ function rebuildTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: '退出',
+      label: t('quit'),
       click: () => {
         app.isQuitting = true;
         app.quit();
@@ -248,6 +250,7 @@ function setStatusBarVisible(visible) {
     positionStatusBar();
     statusBarWindow.showInactive();
     statusBarWindow.webContents.send('quota:update', snapshot);
+    statusBarWindow.webContents.send('config:update', configStore.getPublicConfig());
   } else {
     statusBarWindow.hide();
   }
@@ -262,8 +265,13 @@ function positionStatusBar() {
 
   const display = screen.getPrimaryDisplay();
   const margin = 10;
-  const x = display.workArea.x + display.workArea.width - STATUS_BAR_SIZE.width - margin;
-  const y = display.workArea.y + display.workArea.height - STATUS_BAR_SIZE.height - margin;
+  const position = configStore.getPublicConfig().statusBarPosition;
+  const left = display.workArea.x + margin;
+  const right = display.workArea.x + display.workArea.width - STATUS_BAR_SIZE.width - margin;
+  const top = display.workArea.y + margin;
+  const bottom = display.workArea.y + display.workArea.height - STATUS_BAR_SIZE.height - margin;
+  const x = position.endsWith('left') ? left : right;
+  const y = position.startsWith('top') ? top : bottom;
 
   statusBarWindow.setBounds({
     x: Math.round(x),
@@ -279,8 +287,8 @@ function maybeNotify(nextSnapshot) {
 
   if (nextSnapshot.status === 'warn' || nextSnapshot.status === 'danger') {
     new Notification({
-      title: 'Codex 余量提醒',
-      body: `Codex Plus 账号池有效余量 ${nextSnapshot.pool.effectivePercent}%`
+      title: t('quotaNotificationTitle'),
+      body: `${t('effectiveQuota')} ${nextSnapshot.pool.effectivePercent}%`
     }).show();
   }
 }
@@ -288,15 +296,15 @@ function maybeNotify(nextSnapshot) {
 function formatTooltip(nextSnapshot) {
   if (!nextSnapshot.configured) {
     return [
-      'CLIProxyAPI 未配置',
-      '打开状态面板填写 API 地址和管理密钥'
+      t('notConfigured'),
+      t('configureHint')
     ].join('\n');
   }
 
   return [
-    `Codex Plus 账号池：有效 ${nextSnapshot.pool.effectivePercent}%`,
-    `5H：${nextSnapshot.pool.fiveHour.remainingPercent}% | Week：${nextSnapshot.pool.weekly.remainingPercent}%`,
-    `可用账号：${nextSnapshot.pool.availableAccounts}/${nextSnapshot.pool.totalAccounts}`
+    `${t('effectiveQuota')} ${nextSnapshot.pool.effectivePercent}%`,
+    `5H: ${nextSnapshot.pool.fiveHour.remainingPercent}% | Week: ${nextSnapshot.pool.weekly.remainingPercent}%`,
+    `${t('availableAccounts')}: ${nextSnapshot.pool.availableAccounts}/${nextSnapshot.pool.totalAccounts}`
   ].join('\n');
 }
 
@@ -317,6 +325,8 @@ ipcMain.handle('config:get', () => {
 ipcMain.handle('config:save', async (_event, nextConfig) => {
   configStore.save(nextConfig || {});
   scheduleAutoRefresh();
+  broadcastConfig();
+  positionStatusBar();
   return {
     config: configStore.getPublicConfig(),
     snapshot: await updateQuota('config')
@@ -354,9 +364,62 @@ function scheduleAutoRefresh() {
   }
 }
 
+function broadcastConfig() {
+  const publicConfig = configStore.getPublicConfig();
+  if (window && !window.isDestroyed()) {
+    window.webContents.send('config:update', publicConfig);
+  }
+  if (statusBarWindow && !statusBarWindow.isDestroyed()) {
+    statusBarWindow.webContents.send('config:update', publicConfig);
+  }
+}
+
 function formatInterval(seconds) {
   if (seconds >= 60 && seconds % 60 === 0) {
-    return `${seconds / 60} 分钟`;
+    return `${seconds / 60} ${t('minutes')}`;
   }
-  return `${seconds} 秒`;
+  return `${seconds} ${t('seconds')}`;
+}
+
+function t(key) {
+  const language = configStore?.getPublicConfig().language === 'en' ? 'en' : 'zh';
+  const dictionary = {
+    zh: {
+      remaining: '池剩余',
+      availableAccounts: '可用账号',
+      autoRefresh: '自动刷新',
+      off: '关闭',
+      showPanel: '显示状态面板',
+      configureCliProxyApi: '配置 CLIProxyAPI',
+      hideStatusText: '隐藏常驻文字',
+      showStatusText: '显示常驻文字',
+      refreshQuota: '刷新真实额度',
+      quit: '退出',
+      quotaNotificationTitle: 'Codex 余量提醒',
+      effectiveQuota: 'Codex Plus 账号池有效余量',
+      notConfigured: 'CLIProxyAPI 未配置',
+      configureHint: '打开状态面板填写 API 地址和管理密钥',
+      minutes: '分钟',
+      seconds: '秒'
+    },
+    en: {
+      remaining: 'remaining',
+      availableAccounts: 'Available accounts',
+      autoRefresh: 'Auto refresh',
+      off: 'off',
+      showPanel: 'Show panel',
+      configureCliProxyApi: 'Configure CLIProxyAPI',
+      hideStatusText: 'Hide status text',
+      showStatusText: 'Show status text',
+      refreshQuota: 'Refresh quota',
+      quit: 'Quit',
+      quotaNotificationTitle: 'Codex quota alert',
+      effectiveQuota: 'Codex Plus pool effective quota',
+      notConfigured: 'CLIProxyAPI is not configured',
+      configureHint: 'Open the panel and enter API URL and management key',
+      minutes: 'min',
+      seconds: 'sec'
+    }
+  };
+  return dictionary[language][key] || dictionary.zh[key] || key;
 }

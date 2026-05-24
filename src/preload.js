@@ -14,5 +14,10 @@ contextBridge.exposeInMainWorld('codexQuota', {
     const listener = (_event, snapshot) => callback(snapshot);
     ipcRenderer.on('quota:update', listener);
     return () => ipcRenderer.removeListener('quota:update', listener);
+  },
+  onConfigUpdate: (callback) => {
+    const listener = (_event, config) => callback(config);
+    ipcRenderer.on('config:update', listener);
+    return () => ipcRenderer.removeListener('config:update', listener);
   }
 });

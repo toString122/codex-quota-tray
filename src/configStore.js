@@ -10,6 +10,9 @@ const DEFAULT_AUTO_REFRESH_ENABLED = true;
 const DEFAULT_REFRESH_INTERVAL_SECONDS = 300;
 const MIN_REFRESH_INTERVAL_SECONDS = 60;
 const MAX_REFRESH_INTERVAL_SECONDS = 3600;
+const DEFAULT_LANGUAGE = 'zh';
+const DEFAULT_STATUS_BAR_POSITION = 'bottom-right';
+const DEFAULT_STATUS_BAR_OPACITY = 0.88;
 
 class ConfigStore {
   constructor(userDataPath) {
@@ -24,7 +27,10 @@ class ConfigStore {
         this.getManagementKey() || process.env.CLIPROXYAPI_MANAGEMENT_KEY
       ),
       autoRefreshEnabled: this.getAutoRefreshEnabled(),
-      refreshIntervalSeconds: this.getRefreshIntervalSeconds()
+      refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
+      language: this.getLanguage(),
+      statusBarPosition: this.getStatusBarPosition(),
+      statusBarOpacity: this.getStatusBarOpacity()
     };
   }
 
@@ -40,6 +46,9 @@ class ConfigStore {
       managementKey,
       autoRefreshEnabled: this.getAutoRefreshEnabled(),
       refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
+      language: this.getLanguage(),
+      statusBarPosition: this.getStatusBarPosition(),
+      statusBarOpacity: this.getStatusBarOpacity(),
       configured: Boolean(baseUrl && managementKey)
     };
   }
@@ -52,6 +61,13 @@ class ConfigStore {
     this.config.autoRefreshEnabled = nextConfig.autoRefreshEnabled !== false;
     this.config.refreshIntervalSeconds = normalizeRefreshInterval(
       nextConfig.refreshIntervalSeconds
+    );
+    this.config.language = normalizeLanguage(nextConfig.language);
+    this.config.statusBarPosition = normalizeStatusBarPosition(
+      nextConfig.statusBarPosition
+    );
+    this.config.statusBarOpacity = normalizeStatusBarOpacity(
+      nextConfig.statusBarOpacity
     );
     if (managementKey) {
       this.setManagementKey(managementKey);
@@ -106,6 +122,18 @@ class ConfigStore {
   getRefreshIntervalSeconds() {
     return normalizeRefreshInterval(this.config.refreshIntervalSeconds);
   }
+
+  getLanguage() {
+    return normalizeLanguage(this.config.language);
+  }
+
+  getStatusBarPosition() {
+    return normalizeStatusBarPosition(this.config.statusBarPosition);
+  }
+
+  getStatusBarOpacity() {
+    return normalizeStatusBarOpacity(this.config.statusBarOpacity);
+  }
 }
 
 function normalizeBaseUrl(value) {
@@ -123,9 +151,35 @@ function normalizeRefreshInterval(value) {
   );
 }
 
+function normalizeLanguage(value) {
+  return value === 'en' ? 'en' : DEFAULT_LANGUAGE;
+}
+
+function normalizeStatusBarPosition(value) {
+  const normalized = String(value || '').trim();
+  if (
+    normalized === 'top-left' ||
+    normalized === 'top-right' ||
+    normalized === 'bottom-left' ||
+    normalized === 'bottom-right'
+  ) {
+    return normalized;
+  }
+  return DEFAULT_STATUS_BAR_POSITION;
+}
+
+function normalizeStatusBarOpacity(value) {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) return DEFAULT_STATUS_BAR_OPACITY;
+  return Math.min(Math.max(parsed, 0.2), 1);
+}
+
 module.exports = {
   ConfigStore,
   DEFAULT_BASE_URL,
   DEFAULT_REFRESH_INTERVAL_SECONDS,
-  MIN_REFRESH_INTERVAL_SECONDS
+  MIN_REFRESH_INTERVAL_SECONDS,
+  DEFAULT_LANGUAGE,
+  DEFAULT_STATUS_BAR_POSITION,
+  DEFAULT_STATUS_BAR_OPACITY
 };

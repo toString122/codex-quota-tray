@@ -58,7 +58,8 @@ button:disabled {
   transform: none;
 }
 
-input {
+input,
+select {
   background: rgba(255, 255, 255, 0.86);
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -70,9 +71,14 @@ input {
   width: 100%;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: rgba(39, 93, 159, 0.55);
   box-shadow: 0 0 0 3px rgba(39, 93, 159, 0.12);
+}
+
+select {
+  cursor: pointer;
 }
 
 input[type="checkbox"] {
@@ -81,6 +87,12 @@ input[type="checkbox"] {
   min-height: 18px;
   padding: 0;
   width: 18px;
+}
+
+input[type="range"] {
+  accent-color: var(--ink);
+  cursor: pointer;
+  padding: 0;
 }
 
 .shell {
@@ -123,6 +135,12 @@ input[type="checkbox"] {
 
 .refresh-options {
   align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ui-options {
   display: grid;
   gap: 12px;
   grid-template-columns: 1fr 1fr;
