@@ -331,7 +331,7 @@ h1 {
   background: #d7dfde;
   border-radius: 999px;
   height: 8px;
-  margin-top: 13px;
+  margin-top: 14px;
   overflow: hidden;
 }
 
@@ -480,9 +480,9 @@ li time {
 
 .account-row {
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
-  min-height: 64px;
+  min-height: 72px;
   padding: 10px 12px;
 }
 
@@ -520,8 +520,8 @@ li time {
 .account-metrics {
   align-items: center;
   display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(2, minmax(66px, max-content));
+  gap: 7px;
+  grid-template-columns: minmax(82px, max-content) minmax(116px, max-content);
   justify-content: end;
   justify-items: end;
   min-width: 0;
@@ -530,19 +530,29 @@ li time {
 .account-metric {
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid rgba(213, 221, 220, 0.86);
-  border-radius: 999px;
+  border-radius: 8px;
   color: var(--muted);
-  font: 800 11px/1 "Cascadia Code", Consolas, monospace;
-  padding: 6px 9px;
-  text-align: center;
+  padding: 6px 8px;
+  text-align: left;
   white-space: nowrap;
 }
 
 .account-quota-metric {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
+  display: grid;
+  gap: 3px;
   min-width: 0;
+}
+
+.account-metric-main {
+  color: var(--ink);
+  font: 800 11px/1 "Cascadia Code", Consolas, monospace;
+}
+
+.account-metric-reset {
+  color: var(--muted);
+  font: 800 10px/1.1 "Segoe UI Variable", "Segoe UI", sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-empty {
@@ -611,14 +621,17 @@ li time {
 
   .account-metrics {
     gap: 6px;
-    grid-template-columns: repeat(2, minmax(66px, max-content));
+    grid-template-columns: minmax(76px, max-content) minmax(104px, max-content);
     justify-content: start;
     justify-items: start;
   }
 
-  .account-metric {
+  .account-metric-main {
     font-size: 10px;
-    padding-inline: 6px;
+  }
+
+  .account-metric-reset {
+    font-size: 9px;
   }
 
   .account-toolbar {

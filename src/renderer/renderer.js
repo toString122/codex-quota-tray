@@ -10,10 +10,8 @@ const elements = {
   codexReset: document.querySelector('#codexReset'),
   apiPercent: document.querySelector('#apiPercent'),
   apiBar: document.querySelector('#apiBar'),
-  apiBudget: document.querySelector('#apiBudget'),
   codexUsed: document.querySelector('#codexUsed'),
   codexBar: document.querySelector('#codexBar'),
-  codexLimit: document.querySelector('#codexLimit'),
   todayTokens: document.querySelector('#todayTokens'),
   todayTokensDetail: document.querySelector('#todayTokensDetail'),
   todayCost: document.querySelector('#todayCost'),
@@ -91,7 +89,6 @@ const translations = {
     available: '可用账号',
     measured: '已测',
     bottleneck: '瓶颈',
-    nextReset: 'Next reset',
     resetAt: '刷新',
     inputShort: '入',
     outputShort: '出',
@@ -155,7 +152,6 @@ const translations = {
     available: 'Available',
     measured: 'Measured',
     bottleneck: 'Limit',
-    nextReset: 'Next reset',
     resetAt: 'Reset',
     inputShort: 'in',
     outputShort: 'out',
@@ -274,13 +270,9 @@ function render(snapshot) {
 
   elements.apiPercent.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.apiBar.style.width = `${snapshot.pool.fiveHour.remainingPercent}%`;
-  elements.apiBudget.textContent =
-    `${t('nextReset')} ${formatMaybeTime(snapshot.pool.fiveHour.nextResetAt)}`;
 
   elements.codexUsed.textContent = `${snapshot.pool.weekly.remainingPercent}%`;
   elements.codexBar.style.width = `${snapshot.pool.weekly.remainingPercent}%`;
-  elements.codexLimit.textContent =
-    `${t('nextReset')} ${formatMaybeShortDate(snapshot.pool.weekly.nextResetAt)}`;
   renderUsage(snapshot.usage);
 
   renderAccounts(snapshot);
@@ -346,11 +338,19 @@ function createAccountItem(account) {
 
 function createQuotaMetric(label, quotaWindow, resetFormatter) {
   const metric = document.createElement('span');
+  const main = document.createElement('span');
+  const reset = document.createElement('small');
   const value = quotaWindow?.known ? `${quotaWindow.remainingPercent}%` : '--';
+  const resetText = resetFormatter(quotaWindow?.resetAt);
 
   metric.className = 'account-metric account-quota-metric';
-  metric.textContent = `${label} ${value}`;
-  metric.title = `${t('resetAt')} ${resetFormatter(quotaWindow?.resetAt)}`;
+  main.className = 'account-metric-main';
+  reset.className = 'account-metric-reset';
+  main.textContent = `${label} ${value}`;
+  reset.textContent = `${t('resetAt')} ${resetText}`;
+  metric.title = `${label} ${value} ${separator()} ${t('resetAt')} ${resetText}`;
+
+  metric.append(main, reset);
   return metric;
 }
 
