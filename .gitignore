@@ -1,4 +1,14 @@
 node_modules/
 dist/
+out/
+release/
+coverage/
 *.log
 npm-debug.log*
+.env
+.env.*
+*.local
+.DS_Store
+Thumbs.db
+config.json
+usage-stats.json

@@ -7,6 +7,12 @@
   "bin": {
     "codex-quota-tray": "bin/codex-quota-tray.js"
   },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "electron .",
     "check": "node --check src/main.js && node --check src/configStore.js && node --check src/preload.js && node --check src/quotaProvider.js && node --check src/usageStatsStore.js && node --check src/trayIcon.js && node --check src/renderer/renderer.js && node --check src/statusbar/statusbar.js"
@@ -20,7 +26,10 @@
   ],
   "author": "",
   "license": "MIT",
-  "devDependencies": {
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
     "electron": "^42.2.0"
   }
 }
