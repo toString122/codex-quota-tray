@@ -11,6 +11,13 @@ npm install
 npm start
 ```
 
+如果 Electron 二进制下载很慢，可以在 PowerShell 里使用镜像：
+
+```powershell
+$env:ELECTRON_MIRROR='https://npmmirror.com/mirrors/electron/'
+npm install
+```
+
 ## 全局安装体验
 
 ```bash
