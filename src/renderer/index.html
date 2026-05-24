@@ -32,6 +32,16 @@
           <span>管理密钥</span>
           <input id="managementKeyInput" type="password" spellcheck="false" placeholder="首次配置必须填写">
         </label>
+        <div class="refresh-options">
+          <label class="toggle-row">
+            <input id="autoRefreshInput" type="checkbox">
+            <span>自动刷新</span>
+          </label>
+          <label>
+            <span>刷新间隔（秒）</span>
+            <input id="refreshIntervalInput" type="number" min="60" max="3600" step="30" inputmode="numeric">
+          </label>
+        </div>
         <div class="config-actions">
           <button id="saveConfigButton" type="button">保存并刷新</button>
           <p id="configMessage">配置保存在本机 Electron userData 目录。</p>
@@ -89,7 +99,6 @@
       </section>
 
       <section class="links" aria-label="External links">
-        <button id="openCodexButton" type="button">Codex</button>
         <button id="openApiButton" type="button">CLIProxyAPI</button>
       </section>
 

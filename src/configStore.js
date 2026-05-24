@@ -6,6 +6,10 @@ const { safeStorage } = require('electron');
 
 const CONFIG_FILE = 'config.json';
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8317';
+const DEFAULT_AUTO_REFRESH_ENABLED = true;
+const DEFAULT_REFRESH_INTERVAL_SECONDS = 300;
+const MIN_REFRESH_INTERVAL_SECONDS = 60;
+const MAX_REFRESH_INTERVAL_SECONDS = 3600;
 
 class ConfigStore {
   constructor(userDataPath) {
@@ -18,7 +22,9 @@ class ConfigStore {
       baseUrl: this.config.baseUrl || process.env.CLIPROXYAPI_BASE_URL || DEFAULT_BASE_URL,
       hasManagementKey: Boolean(
         this.getManagementKey() || process.env.CLIPROXYAPI_MANAGEMENT_KEY
-      )
+      ),
+      autoRefreshEnabled: this.getAutoRefreshEnabled(),
+      refreshIntervalSeconds: this.getRefreshIntervalSeconds()
     };
   }
 
@@ -32,6 +38,8 @@ class ConfigStore {
     return {
       baseUrl,
       managementKey,
+      autoRefreshEnabled: this.getAutoRefreshEnabled(),
+      refreshIntervalSeconds: this.getRefreshIntervalSeconds(),
       configured: Boolean(baseUrl && managementKey)
     };
   }
@@ -41,6 +49,10 @@ class ConfigStore {
     const managementKey = String(nextConfig.managementKey || '').trim();
 
     this.config.baseUrl = baseUrl;
+    this.config.autoRefreshEnabled = nextConfig.autoRefreshEnabled !== false;
+    this.config.refreshIntervalSeconds = normalizeRefreshInterval(
+      nextConfig.refreshIntervalSeconds
+    );
     if (managementKey) {
       this.setManagementKey(managementKey);
     }
@@ -83,6 +95,17 @@ class ConfigStore {
     this.config.managementKey = value;
     delete this.config.managementKeyEncrypted;
   }
+
+  getAutoRefreshEnabled() {
+    if (typeof this.config.autoRefreshEnabled === 'boolean') {
+      return this.config.autoRefreshEnabled;
+    }
+    return DEFAULT_AUTO_REFRESH_ENABLED;
+  }
+
+  getRefreshIntervalSeconds() {
+    return normalizeRefreshInterval(this.config.refreshIntervalSeconds);
+  }
 }
 
 function normalizeBaseUrl(value) {
@@ -91,7 +114,18 @@ function normalizeBaseUrl(value) {
     .replace(/\/+$/, '');
 }
 
+function normalizeRefreshInterval(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return DEFAULT_REFRESH_INTERVAL_SECONDS;
+  return Math.min(
+    Math.max(parsed, MIN_REFRESH_INTERVAL_SECONDS),
+    MAX_REFRESH_INTERVAL_SECONDS
+  );
+}
+
 module.exports = {
   ConfigStore,
-  DEFAULT_BASE_URL
+  DEFAULT_BASE_URL,
+  DEFAULT_REFRESH_INTERVAL_SECONDS,
+  MIN_REFRESH_INTERVAL_SECONDS
 };

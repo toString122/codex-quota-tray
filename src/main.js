@@ -22,6 +22,7 @@ let window = null;
 let statusBarWindow = null;
 let snapshot = null;
 let refreshTimer = null;
+let refreshInFlight = false;
 let notifiedStatus = 'good';
 let statusBarVisible = true;
 
@@ -51,9 +52,7 @@ if (!gotLock) {
       showWindow();
     }
     void updateQuota('startup');
-    refreshTimer = setInterval(() => {
-      void updateQuota('timer');
-    }, 1000 * 60);
+    scheduleAutoRefresh();
     screen.on('display-metrics-changed', positionStatusBar);
   });
 }
@@ -141,14 +140,23 @@ function showWindow() {
 }
 
 async function updateQuota(reason) {
-  snapshot = await provider.refresh();
-  renderSnapshot();
-
-  if (reason !== 'startup') {
-    maybeNotify(snapshot);
+  if (refreshInFlight) {
+    return snapshot;
   }
 
-  return snapshot;
+  refreshInFlight = true;
+  try {
+    snapshot = await provider.refresh();
+    renderSnapshot();
+
+    if (reason !== 'startup') {
+      maybeNotify(snapshot);
+    }
+
+    return snapshot;
+  } finally {
+    refreshInFlight = false;
+  }
 }
 
 function renderSnapshot() {
@@ -171,6 +179,7 @@ function renderSnapshot() {
 }
 
 function rebuildTrayMenu() {
+  const publicConfig = configStore.getPublicConfig();
   const contextMenu = Menu.buildFromTemplate([
     {
       label: `5H 池剩余 ${snapshot.pool.fiveHour.remainingPercent}%`,
@@ -182,6 +191,12 @@ function rebuildTrayMenu() {
     },
     {
       label: `可用账号 ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts}`,
+      enabled: false
+    },
+    {
+      label: publicConfig.autoRefreshEnabled
+        ? `自动刷新：${formatInterval(publicConfig.refreshIntervalSeconds)}`
+        : '自动刷新：关闭',
       enabled: false
     },
     { type: 'separator' },
@@ -206,10 +221,6 @@ function rebuildTrayMenu() {
       }
     },
     { type: 'separator' },
-    {
-      label: '打开 Codex 页面',
-      click: () => shell.openExternal('https://chatgpt.com/codex')
-    },
     {
       label: '打开 CLIProxyAPI',
       click: () => shell.openExternal(configStore.getPublicConfig().baseUrl)
@@ -305,6 +316,7 @@ ipcMain.handle('config:get', () => {
 
 ipcMain.handle('config:save', async (_event, nextConfig) => {
   configStore.save(nextConfig || {});
+  scheduleAutoRefresh();
   return {
     config: configStore.getPublicConfig(),
     snapshot: await updateQuota('config')
@@ -320,10 +332,31 @@ ipcMain.handle('statusbar:hide', () => {
   return statusBarVisible;
 });
 
-ipcMain.handle('link:open-codex-usage', () => {
-  shell.openExternal('https://chatgpt.com/codex');
-});
-
 ipcMain.handle('link:open-api-usage', () => {
   shell.openExternal(configStore.getPublicConfig().baseUrl);
 });
+
+function scheduleAutoRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  const publicConfig = configStore.getPublicConfig();
+  if (!publicConfig.autoRefreshEnabled) return;
+
+  refreshTimer = setInterval(() => {
+    void updateQuota('timer');
+  }, publicConfig.refreshIntervalSeconds * 1000);
+
+  if (tray) {
+    rebuildTrayMenu();
+  }
+}
+
+function formatInterval(seconds) {
+  if (seconds >= 60 && seconds % 60 === 0) {
+    return `${seconds / 60} 分钟`;
+  }
+  return `${seconds} 秒`;
+}

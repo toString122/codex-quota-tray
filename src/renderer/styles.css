@@ -75,6 +75,14 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(39, 93, 159, 0.12);
 }
 
+input[type="checkbox"] {
+  accent-color: var(--ink);
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  width: 18px;
+}
+
 .shell {
   display: flex;
   flex-direction: column;
@@ -111,6 +119,29 @@ input:focus {
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
+}
+
+.refresh-options {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.toggle-row {
+  align-items: center;
+  background: rgba(238, 242, 241, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: flex !important;
+  gap: 9px !important;
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.toggle-row span {
+  color: var(--ink) !important;
+  font-size: 13px !important;
 }
 
 .config-actions {
@@ -310,7 +341,7 @@ h1 {
 }
 
 .links {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 
 .links button {

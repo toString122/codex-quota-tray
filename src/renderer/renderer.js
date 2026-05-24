@@ -20,12 +20,13 @@ const elements = {
   configState: document.querySelector('#configState'),
   baseUrlInput: document.querySelector('#baseUrlInput'),
   managementKeyInput: document.querySelector('#managementKeyInput'),
+  autoRefreshInput: document.querySelector('#autoRefreshInput'),
+  refreshIntervalInput: document.querySelector('#refreshIntervalInput'),
   saveConfigButton: document.querySelector('#saveConfigButton'),
   configMessage: document.querySelector('#configMessage'),
   updatedAt: document.querySelector('#updatedAt'),
   eventList: document.querySelector('#eventList'),
   refreshButton: document.querySelector('#refreshButton'),
-  openCodexButton: document.querySelector('#openCodexButton'),
   openApiButton: document.querySelector('#openApiButton')
 };
 
@@ -49,7 +50,9 @@ elements.saveConfigButton.addEventListener('click', async () => {
   try {
     const result = await window.codexQuota.saveConfig({
       baseUrl: elements.baseUrlInput.value,
-      managementKey: elements.managementKeyInput.value
+      managementKey: elements.managementKeyInput.value,
+      autoRefreshEnabled: elements.autoRefreshInput.checked,
+      refreshIntervalSeconds: elements.refreshIntervalInput.value
     });
     elements.managementKeyInput.value = '';
     renderConfig(result.config);
@@ -60,10 +63,6 @@ elements.saveConfigButton.addEventListener('click', async () => {
   } finally {
     elements.saveConfigButton.disabled = false;
   }
-});
-
-elements.openCodexButton.addEventListener('click', () => {
-  window.codexQuota.openCodexUsage();
 });
 
 elements.openApiButton.addEventListener('click', () => {
@@ -123,6 +122,8 @@ function renderConfig(config) {
   elements.managementKeyInput.placeholder = config.hasManagementKey
     ? '留空保留当前密钥'
     : '首次配置必须填写';
+  elements.autoRefreshInput.checked = config.autoRefreshEnabled !== false;
+  elements.refreshIntervalInput.value = String(config.refreshIntervalSeconds || 300);
   elements.configState.textContent = config.hasManagementKey ? '已配置' : '未配置';
   elements.configPanel.classList.toggle('configured', config.hasManagementKey);
 }

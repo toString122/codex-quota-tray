@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('codexQuota', {
   saveConfig: (config) => ipcRenderer.invoke('config:save', config),
   showPanel: () => ipcRenderer.invoke('window:show-panel'),
   hideStatusBar: () => ipcRenderer.invoke('statusbar:hide'),
-  openCodexUsage: () => ipcRenderer.invoke('link:open-codex-usage'),
   openApiUsage: () => ipcRenderer.invoke('link:open-api-usage'),
   onUpdate: (callback) => {
     const listener = (_event, snapshot) => callback(snapshot);
