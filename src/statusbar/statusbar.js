@@ -20,6 +20,13 @@ function render(snapshot) {
   document.body.classList.remove('status-good', 'status-warn', 'status-danger');
   document.body.classList.add(`status-${snapshot.status}`);
 
+  if (!snapshot.configured) {
+    elements.fiveHourText.textContent = 'Set URL';
+    elements.weeklyText.textContent = 'Set key';
+    elements.statusBadge.textContent = 'SET';
+    return;
+  }
+
   elements.fiveHourText.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.weeklyText.textContent = `${snapshot.pool.weekly.remainingPercent}%`;
   elements.statusBadge.textContent =

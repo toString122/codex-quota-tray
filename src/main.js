@@ -11,15 +11,16 @@ const {
   screen,
   shell
 } = require('electron');
-const { MockQuotaProvider } = require('./quotaProvider');
+const { ConfigStore } = require('./configStore');
+const { CLIProxyAPIQuotaProvider } = require('./quotaProvider');
 const { createQuotaTrayImage } = require('./trayIcon');
 
-const provider = new MockQuotaProvider();
-
+let configStore = null;
+let provider = null;
 let tray = null;
 let window = null;
 let statusBarWindow = null;
-let snapshot = provider.getSnapshot();
+let snapshot = null;
 let refreshTimer = null;
 let notifiedStatus = 'good';
 let statusBarVisible = true;
@@ -40,11 +41,19 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     app.setAppUserModelId('local.codex-quota-tray');
+    configStore = new ConfigStore(app.getPath('userData'));
+    provider = new CLIProxyAPIQuotaProvider(configStore);
+    snapshot = provider.getSnapshot();
     createTray();
     createWindow();
     createStatusBarWindow();
-    updateQuota('startup');
-    refreshTimer = setInterval(() => updateQuota('timer'), 1000 * 20);
+    if (!snapshot.configured) {
+      showWindow();
+    }
+    void updateQuota('startup');
+    refreshTimer = setInterval(() => {
+      void updateQuota('timer');
+    }, 1000 * 60);
     screen.on('display-metrics-changed', positionStatusBar);
   });
 }
@@ -131,9 +140,18 @@ function showWindow() {
   window.webContents.send('quota:update', snapshot);
 }
 
-function updateQuota(reason) {
-  snapshot = provider.getSnapshot();
+async function updateQuota(reason) {
+  snapshot = await provider.refresh();
+  renderSnapshot();
 
+  if (reason !== 'startup') {
+    maybeNotify(snapshot);
+  }
+
+  return snapshot;
+}
+
+function renderSnapshot() {
   if (tray) {
     tray.setImage(createQuotaTrayImage(getTrayPercent(snapshot), snapshot.status));
     tray.setToolTip(formatTooltip(snapshot));
@@ -150,12 +168,6 @@ function updateQuota(reason) {
       positionStatusBar();
     }
   }
-
-  if (reason !== 'startup') {
-    maybeNotify(snapshot);
-  }
-
-  return snapshot;
 }
 
 function rebuildTrayMenu() {
@@ -165,7 +177,7 @@ function rebuildTrayMenu() {
       enabled: false
     },
     {
-      label: `周池剩余 ${snapshot.pool.weekly.remainingPercent}%`,
+      label: `Week 池剩余 ${snapshot.pool.weekly.remainingPercent}%`,
       enabled: false
     },
     {
@@ -178,30 +190,19 @@ function rebuildTrayMenu() {
       click: showWindow
     },
     {
+      label: '配置 CLIProxyAPI',
+      click: showWindow
+    },
+    {
       label: statusBarVisible ? '隐藏常驻文字' : '显示常驻文字',
       type: 'checkbox',
       checked: statusBarVisible,
       click: (menuItem) => setStatusBarVisible(menuItem.checked)
     },
     {
-      label: '刷新模拟数据',
+      label: '刷新真实额度',
       click: () => {
-        provider.refresh();
-        updateQuota('manual');
-      }
-    },
-    {
-      label: '模拟消耗一次',
-      click: () => {
-        provider.consumeCodex();
-        updateQuota('consume');
-      }
-    },
-    {
-      label: '重置模拟数据',
-      click: () => {
-        provider.reset();
-        updateQuota('reset');
+        void updateQuota('manual');
       }
     },
     { type: 'separator' },
@@ -210,8 +211,8 @@ function rebuildTrayMenu() {
       click: () => shell.openExternal('https://chatgpt.com/codex')
     },
     {
-      label: '打开 API 用量页',
-      click: () => shell.openExternal('https://platform.openai.com/usage')
+      label: '打开 CLIProxyAPI',
+      click: () => shell.openExternal(configStore.getPublicConfig().baseUrl)
     },
     { type: 'separator' },
     {
@@ -268,38 +269,46 @@ function maybeNotify(nextSnapshot) {
   if (nextSnapshot.status === 'warn' || nextSnapshot.status === 'danger') {
     new Notification({
       title: 'Codex 余量提醒',
-      body: `模拟 Codex 剩余 ${nextSnapshot.codex.percentRemaining}%`
+      body: `Codex Plus 账号池有效余量 ${nextSnapshot.pool.effectivePercent}%`
     }).show();
   }
 }
 
 function formatTooltip(nextSnapshot) {
+  if (!nextSnapshot.configured) {
+    return [
+      'CLIProxyAPI 未配置',
+      '打开状态面板填写 API 地址和管理密钥'
+    ].join('\n');
+  }
+
   return [
     `Codex Plus 账号池：有效 ${nextSnapshot.pool.effectivePercent}%`,
-    `5H：${nextSnapshot.pool.fiveHour.remainingPercent}% | 周：${nextSnapshot.pool.weekly.remainingPercent}%`,
+    `5H：${nextSnapshot.pool.fiveHour.remainingPercent}% | Week：${nextSnapshot.pool.weekly.remainingPercent}%`,
     `可用账号：${nextSnapshot.pool.availableAccounts}/${nextSnapshot.pool.totalAccounts}`
   ].join('\n');
 }
 
 function getTrayPercent(nextSnapshot) {
-  return nextSnapshot.pool?.effectivePercent ?? nextSnapshot.codex.percentRemaining;
+  return nextSnapshot?.pool?.effectivePercent ?? nextSnapshot?.codex?.percentRemaining ?? 0;
 }
 
 ipcMain.handle('quota:get', () => snapshot);
 
 ipcMain.handle('quota:refresh', () => {
-  provider.refresh();
   return updateQuota('manual');
 });
 
-ipcMain.handle('quota:consume-codex', () => {
-  provider.consumeCodex();
-  return updateQuota('consume');
+ipcMain.handle('config:get', () => {
+  return configStore.getPublicConfig();
 });
 
-ipcMain.handle('quota:reset-mock', () => {
-  provider.reset();
-  return updateQuota('reset');
+ipcMain.handle('config:save', async (_event, nextConfig) => {
+  configStore.save(nextConfig || {});
+  return {
+    config: configStore.getPublicConfig(),
+    snapshot: await updateQuota('config')
+  };
 });
 
 ipcMain.handle('window:show-panel', () => {
@@ -316,5 +325,5 @@ ipcMain.handle('link:open-codex-usage', () => {
 });
 
 ipcMain.handle('link:open-api-usage', () => {
-  shell.openExternal('https://platform.openai.com/usage');
+  shell.openExternal(configStore.getPublicConfig().baseUrl);
 });

@@ -1,7 +1,7 @@
 {
   "name": "codex-quota-tray",
   "version": "0.1.0",
-  "description": "Windows tray utility prototype for showing simulated ChatGPT Codex quota.",
+  "description": "Windows tray utility for showing ChatGPT Codex quota via CLIProxyAPI.",
   "main": "src/main.js",
   "type": "commonjs",
   "bin": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "electron .",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/quotaProvider.js && node --check src/trayIcon.js && node --check src/renderer/renderer.js && node --check src/statusbar/statusbar.js"
+    "check": "node --check src/main.js && node --check src/configStore.js && node --check src/preload.js && node --check src/quotaProvider.js && node --check src/trayIcon.js && node --check src/renderer/renderer.js && node --check src/statusbar/statusbar.js"
   },
   "keywords": [
     "codex",

@@ -52,6 +52,29 @@ button:active {
   transform: translateY(0);
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+  transform: none;
+}
+
+input {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  font: 700 13px/1.2 "Cascadia Code", Consolas, monospace;
+  min-height: 38px;
+  outline: 0;
+  padding: 0 10px;
+  width: 100%;
+}
+
+input:focus {
+  border-color: rgba(39, 93, 159, 0.55);
+  box-shadow: 0 0 0 3px rgba(39, 93, 159, 0.12);
+}
+
 .shell {
   display: flex;
   flex-direction: column;
@@ -60,6 +83,48 @@ button:active {
   max-width: 460px;
   min-height: 100vh;
   padding: 18px;
+}
+
+.config-panel {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.config-panel.configured {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.config-panel.needs-config {
+  border-color: rgba(204, 55, 62, 0.38);
+}
+
+.config-panel label {
+  display: grid;
+  gap: 7px;
+}
+
+.config-panel label span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.config-actions {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 128px 1fr;
+}
+
+.config-actions p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
 }
 
 .topbar {
@@ -238,6 +303,10 @@ h1 {
 
 .actions {
   grid-template-columns: 1fr 1fr 1fr;
+}
+
+.single-action {
+  grid-template-columns: 1fr;
 }
 
 .links {

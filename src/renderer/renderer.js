@@ -16,11 +16,15 @@ const elements = {
   codexLimit: document.querySelector('#codexLimit'),
   accountSummary: document.querySelector('#accountSummary'),
   accountList: document.querySelector('#accountList'),
+  configPanel: document.querySelector('#configPanel'),
+  configState: document.querySelector('#configState'),
+  baseUrlInput: document.querySelector('#baseUrlInput'),
+  managementKeyInput: document.querySelector('#managementKeyInput'),
+  saveConfigButton: document.querySelector('#saveConfigButton'),
+  configMessage: document.querySelector('#configMessage'),
   updatedAt: document.querySelector('#updatedAt'),
   eventList: document.querySelector('#eventList'),
   refreshButton: document.querySelector('#refreshButton'),
-  consumeButton: document.querySelector('#consumeButton'),
-  resetButton: document.querySelector('#resetButton'),
   openCodexButton: document.querySelector('#openCodexButton'),
   openApiButton: document.querySelector('#openApiButton')
 };
@@ -33,17 +37,29 @@ const statusLabels = {
 
 window.codexQuota.onUpdate(render);
 window.codexQuota.getSnapshot().then(render);
+window.codexQuota.getConfig().then(renderConfig);
 
 elements.refreshButton.addEventListener('click', async () => {
   render(await window.codexQuota.refresh());
 });
 
-elements.consumeButton.addEventListener('click', async () => {
-  render(await window.codexQuota.consumeCodex());
-});
-
-elements.resetButton.addEventListener('click', async () => {
-  render(await window.codexQuota.resetMock());
+elements.saveConfigButton.addEventListener('click', async () => {
+  elements.saveConfigButton.disabled = true;
+  elements.configMessage.textContent = '正在保存并刷新真实额度...';
+  try {
+    const result = await window.codexQuota.saveConfig({
+      baseUrl: elements.baseUrlInput.value,
+      managementKey: elements.managementKeyInput.value
+    });
+    elements.managementKeyInput.value = '';
+    renderConfig(result.config);
+    render(result.snapshot);
+    elements.configMessage.textContent = '配置已保存。';
+  } catch (error) {
+    elements.configMessage.textContent = error.message || '配置保存失败。';
+  } finally {
+    elements.saveConfigButton.disabled = false;
+  }
 });
 
 elements.openCodexButton.addEventListener('click', () => {
@@ -62,25 +78,32 @@ function render(snapshot) {
   document.body.classList.add(statusClass);
 
   elements.statusText.textContent = statusLabels[snapshot.status] || 'Normal';
+  elements.configPanel.classList.toggle('needs-config', !snapshot.configured);
+  if (!snapshot.configured) {
+    elements.configMessage.textContent = '请先填写 CLIProxyAPI 地址和管理密钥。';
+  } else if (snapshot.events[0]?.label === 'CLIProxyAPI refresh failed') {
+    elements.configMessage.textContent = snapshot.events[0].detail;
+  }
+
   elements.codexPercent.textContent = `${snapshot.pool.effectivePercent}%`;
   elements.codexMeter.style.setProperty(
     '--value',
     `${snapshot.pool.effectivePercent * 3.6}deg`
   );
   elements.codexRemaining.textContent =
-    `5H ${snapshot.pool.fiveHour.remainingPercent}% / 周 ${snapshot.pool.weekly.remainingPercent}%`;
+    `5H ${snapshot.pool.fiveHour.remainingPercent}% / Week ${snapshot.pool.weekly.remainingPercent}%`;
   elements.codexReset.textContent =
-    `可用账号 ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} · 瓶颈 ${snapshot.pool.bottleneck}`;
+    `可用账号 ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} · 已测 ${snapshot.pool.measuredAccounts}/${snapshot.pool.totalAccounts} · 瓶颈 ${snapshot.pool.bottleneck}`;
 
   elements.apiPercent.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.apiBar.style.width = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.apiBudget.textContent =
-    `Next reset ${formatTime(snapshot.pool.fiveHour.nextResetAt)}`;
+    `Next reset ${formatMaybeTime(snapshot.pool.fiveHour.nextResetAt)}`;
 
   elements.codexUsed.textContent = `${snapshot.pool.weekly.remainingPercent}%`;
   elements.codexBar.style.width = `${snapshot.pool.weekly.remainingPercent}%`;
   elements.codexLimit.textContent =
-    `Next reset ${formatShortDate(snapshot.pool.weekly.nextResetAt)}`;
+    `Next reset ${formatMaybeShortDate(snapshot.pool.weekly.nextResetAt)}`;
 
   elements.accountSummary.textContent =
     `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ready`;
@@ -92,6 +115,16 @@ function render(snapshot) {
   elements.eventList.replaceChildren(
     ...snapshot.events.map((event) => createEventItem(event))
   );
+}
+
+function renderConfig(config) {
+  if (!config) return;
+  elements.baseUrlInput.value = config.baseUrl || '';
+  elements.managementKeyInput.placeholder = config.hasManagementKey
+    ? '留空保留当前密钥'
+    : '首次配置必须填写';
+  elements.configState.textContent = config.hasManagementKey ? '已配置' : '未配置';
+  elements.configPanel.classList.toggle('configured', config.hasManagementKey);
 }
 
 function createAccountItem(account) {
@@ -107,10 +140,12 @@ function createAccountItem(account) {
   const effective = document.createElement('time');
 
   title.textContent = account.email;
-  detail.textContent = `${account.plan.toUpperCase()} · ${account.available ? 'ready' : 'limited'}`;
+  detail.textContent = account.quotaKnown
+    ? `${account.plan.toUpperCase()} · ${account.available ? 'ready' : 'limited'}`
+    : `${account.provider || 'codex'} · ${account.error || 'quota unknown'}`;
   fiveHour.textContent = `5H ${account.fiveHour.remainingPercent}%`;
-  weekly.textContent = `周 ${account.weekly.remainingPercent}%`;
-  effective.textContent = `${account.effectiveRemainingPercent}%`;
+  weekly.textContent = `Week ${account.weekly.remainingPercent}%`;
+  effective.textContent = account.quotaKnown ? `${account.effectiveRemainingPercent}%` : '--';
 
   identity.append(title, detail);
   numbers.append(fiveHour, weekly, effective);
@@ -141,6 +176,10 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
+function formatMaybeTime(value) {
+  return value ? formatTime(value) : '--';
+}
+
 function formatClock(value) {
   return new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
@@ -156,4 +195,8 @@ function formatShortDate(value) {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value));
+}
+
+function formatMaybeShortDate(value) {
+  return value ? formatShortDate(value) : '--';
 }
