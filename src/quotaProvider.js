@@ -45,10 +45,10 @@ class CLIProxyAPIQuotaProvider {
         codex: {
           label: 'ChatGPT Codex Plus Pool',
           limit: pool.measuredAccounts * 100,
-          used: Math.round(pool.measuredAccounts * 100 - pool.fiveHour.remainingUnits),
-          remaining: Math.round(pool.fiveHour.remainingUnits),
-          percentRemaining: pool.fiveHour.remainingPercent,
-          resetAt: pool.fiveHour.nextResetAt
+          used: Math.round(pool.measuredAccounts * 100 - pool.effective.remainingUnits),
+          remaining: Math.round(pool.effective.remainingUnits),
+          percentRemaining: pool.effectivePercent,
+          resetAt: pool.effective.nextResetAt
         },
         api: {
           label: 'CLIProxyAPI',
@@ -241,13 +241,19 @@ function summarizePlusPool(accounts) {
     (sum, account) => sum + account.weight * account.weekly.remainingPercent,
     0
   );
+  const effectiveRemainingUnits = measured.reduce(
+    (sum, account) => sum + account.weight * account.effectiveRemainingPercent,
+    0
+  );
   const fiveHourPercent = measured.length
     ? Math.round(fiveHourRemainingUnits / totalWeight)
     : 0;
   const weeklyPercent = measured.length
     ? Math.round(weeklyRemainingUnits / totalWeight)
     : 0;
-  const effectivePercent = Math.min(fiveHourPercent, weeklyPercent);
+  const effectivePercent = measured.length
+    ? Math.round(effectiveRemainingUnits / totalWeight)
+    : 0;
 
   return {
     plan: 'plus',
@@ -255,7 +261,13 @@ function summarizePlusPool(accounts) {
     measuredAccounts: measured.length,
     availableAccounts: measured.filter((account) => account.available).length,
     effectivePercent,
-    bottleneck: fiveHourPercent <= weeklyPercent ? '5H' : 'Week',
+    bottleneck: bottleneckForAccounts(measured),
+    effective: {
+      remainingUnits: effectiveRemainingUnits,
+      capacityUnits: totalWeight * 100,
+      remainingPercent: effectivePercent,
+      nextResetAt: nextEffectiveReset(measured)
+    },
     fiveHour: {
       remainingUnits: fiveHourRemainingUnits,
       capacityUnits: totalWeight * 100,
@@ -269,6 +281,38 @@ function summarizePlusPool(accounts) {
       nextResetAt: earliestReset(measured, 'weekly')
     }
   };
+}
+
+function bottleneckForAccounts(accounts) {
+  let fiveHourLimited = 0;
+  let weeklyLimited = 0;
+
+  for (const account of accounts) {
+    if (account.fiveHour.remainingPercent < account.weekly.remainingPercent) {
+      fiveHourLimited += 1;
+    } else if (account.weekly.remainingPercent < account.fiveHour.remainingPercent) {
+      weeklyLimited += 1;
+    }
+  }
+
+  if (fiveHourLimited > 0 && weeklyLimited > 0) return 'Mixed';
+  if (fiveHourLimited > 0) return '5H';
+  if (weeklyLimited > 0) return 'Week';
+  return accounts.length ? 'Even' : 'None';
+}
+
+function nextEffectiveReset(accounts) {
+  const limitedResets = accounts
+    .map((account) => {
+      if (account.fiveHour.remainingPercent <= account.weekly.remainingPercent) {
+        return account.fiveHour.resetAt;
+      }
+      return account.weekly.resetAt;
+    })
+    .filter(Boolean)
+    .sort();
+
+  return limitedResets[0] || null;
 }
 
 function isCodexAccount(file) {
@@ -286,6 +330,12 @@ function createEmptySnapshot({ configured, message, previous } = {}) {
     availableAccounts: 0,
     effectivePercent: 0,
     bottleneck: '5H',
+    effective: {
+      remainingUnits: 0,
+      capacityUnits: 0,
+      remainingPercent: 0,
+      nextResetAt: null
+    },
     fiveHour: {
       remainingUnits: 0,
       capacityUnits: 0,
