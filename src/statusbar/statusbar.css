@@ -7,7 +7,11 @@
   --muted: #9aa8b2;
   --surface-rgb: 17, 22, 27;
   --surface-alpha: 0.88;
-  --line: rgba(255, 255, 255, 0.12);
+  --surface-highlight-alpha: 0.09;
+  --surface-border-alpha: 0.14;
+  --surface-hover-border-alpha: 0.24;
+  --badge-bg-alpha: 0.12;
+  --badge-border-alpha: 0.14;
   --accent: var(--good);
 }
 
@@ -31,9 +35,9 @@ body {
 .status-strip {
   align-items: center;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent),
+    linear-gradient(180deg, rgba(255, 255, 255, var(--surface-highlight-alpha)), transparent),
     rgba(var(--surface-rgb), var(--surface-alpha));
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, var(--surface-border-alpha));
   border-radius: 7px;
   color: var(--ink);
   cursor: pointer;
@@ -47,7 +51,7 @@ body {
 }
 
 .status-strip:hover {
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, var(--surface-hover-border-alpha));
 }
 
 .status-light {
@@ -97,8 +101,8 @@ body {
 
 .status-badge {
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, var(--badge-bg-alpha));
+  border: 1px solid rgba(255, 255, 255, var(--badge-border-alpha));
   border-radius: 999px;
   color: var(--accent);
   display: flex;

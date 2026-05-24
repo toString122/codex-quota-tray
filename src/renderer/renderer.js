@@ -160,7 +160,12 @@ elements.languageInput.addEventListener('change', () => {
   applyLanguage();
 });
 
-elements.statusBarOpacityInput.addEventListener('input', updateOpacityLabel);
+elements.statusBarOpacityInput.addEventListener('input', () => {
+  updateOpacityLabel();
+  void window.codexQuota.previewConfig({
+    statusBarOpacity: Number(elements.statusBarOpacityInput.value) / 100
+  });
+});
 
 elements.openApiButton.addEventListener('click', () => {
   window.codexQuota.openApiUsage();

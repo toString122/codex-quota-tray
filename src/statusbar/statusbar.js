@@ -46,9 +46,23 @@ function renderConfig(config) {
     ...activeConfig,
     ...config
   };
+  const opacity = normalizeOpacity(activeConfig.statusBarOpacity);
+  const style = document.documentElement.style;
   document.documentElement.lang = activeConfig.language === 'en' ? 'en' : 'zh-CN';
-  document.documentElement.style.setProperty(
-    '--surface-alpha',
-    String(activeConfig.statusBarOpacity ?? 0.88)
-  );
+  style.setProperty('--surface-alpha', formatAlpha(opacity));
+  style.setProperty('--surface-highlight-alpha', formatAlpha(opacity * 0.1));
+  style.setProperty('--surface-border-alpha', formatAlpha(opacity * 0.16));
+  style.setProperty('--surface-hover-border-alpha', formatAlpha(opacity * 0.28));
+  style.setProperty('--badge-bg-alpha', formatAlpha(opacity * 0.14));
+  style.setProperty('--badge-border-alpha', formatAlpha(opacity * 0.16));
+}
+
+function normalizeOpacity(value) {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) return 0.88;
+  return Math.min(Math.max(parsed, 0.2), 1);
+}
+
+function formatAlpha(value) {
+  return String(Number(value.toFixed(3)));
 }

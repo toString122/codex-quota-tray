@@ -333,6 +333,26 @@ ipcMain.handle('config:save', async (_event, nextConfig) => {
   };
 });
 
+ipcMain.handle('config:preview', (_event, nextConfig) => {
+  const previewConfig = {
+    ...configStore.getPublicConfig()
+  };
+
+  if (
+    Object.prototype.hasOwnProperty.call(nextConfig || {}, 'statusBarOpacity')
+  ) {
+    previewConfig.statusBarOpacity = normalizePreviewOpacity(
+      nextConfig.statusBarOpacity
+    );
+  }
+
+  if (statusBarWindow && !statusBarWindow.isDestroyed()) {
+    statusBarWindow.webContents.send('config:update', previewConfig);
+  }
+
+  return previewConfig;
+});
+
 ipcMain.handle('window:show-panel', () => {
   showWindow();
 });
@@ -379,6 +399,12 @@ function formatInterval(seconds) {
     return `${seconds / 60} ${t('minutes')}`;
   }
   return `${seconds} ${t('seconds')}`;
+}
+
+function normalizePreviewOpacity(value) {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) return 0.88;
+  return Math.min(Math.max(parsed, 0.2), 1);
 }
 
 function t(key) {

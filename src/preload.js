@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('codexQuota', {
   refresh: () => ipcRenderer.invoke('quota:refresh'),
   getConfig: () => ipcRenderer.invoke('config:get'),
   saveConfig: (config) => ipcRenderer.invoke('config:save', config),
+  previewConfig: (config) => ipcRenderer.invoke('config:preview', config),
   showPanel: () => ipcRenderer.invoke('window:show-panel'),
   hideStatusBar: () => ipcRenderer.invoke('statusbar:hide'),
   openApiUsage: () => ipcRenderer.invoke('link:open-api-usage'),
