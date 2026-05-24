@@ -70,7 +70,7 @@ http://127.0.0.1:8317
 ### 3. 克隆并安装项目
 
 ```powershell
-git clone https://github.com/<your-name>/codex-quota-tray.git
+git clone https://github.com/toString122/codex-quota-tray.git
 cd codex-quota-tray
 npm install
 ```

@@ -70,7 +70,7 @@ Also prepare your Management API key. You will enter it in the app settings pane
 ### 3. Clone and Install
 
 ```powershell
-git clone https://github.com/<your-name>/codex-quota-tray.git
+git clone https://github.com/toString122/codex-quota-tray.git
 cd codex-quota-tray
 npm install
 ```

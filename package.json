@@ -7,6 +7,14 @@
   "bin": {
     "codex-quota-tray": "bin/codex-quota-tray.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toString122/codex-quota-tray.git"
+  },
+  "bugs": {
+    "url": "https://github.com/toString122/codex-quota-tray/issues"
+  },
+  "homepage": "https://github.com/toString122/codex-quota-tray#readme",
   "files": [
     "bin",
     "src",
@@ -27,6 +35,9 @@
   ],
   "author": "erebus",
   "license": "MIT",
+  "os": [
+    "win32"
+  ],
   "engines": {
     "node": ">=20"
   },
