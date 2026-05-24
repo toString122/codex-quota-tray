@@ -21,6 +21,6 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^37.0.0"
+    "electron": "^42.2.0"
   }
 }
