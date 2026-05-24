@@ -92,6 +92,7 @@ const translations = {
     measured: '已测',
     bottleneck: '瓶颈',
     nextReset: 'Next reset',
+    resetAt: '刷新',
     inputShort: '入',
     outputShort: '出',
     ready: '可用',
@@ -155,6 +156,7 @@ const translations = {
     measured: 'Measured',
     bottleneck: 'Limit',
     nextReset: 'Next reset',
+    resetAt: 'Reset',
     inputShort: 'in',
     outputShort: 'out',
     ready: 'ready',
@@ -316,26 +318,48 @@ function createAccountItem(account) {
   const title = document.createElement('strong');
   const detail = document.createElement('span');
   const numbers = document.createElement('div');
-  const fiveHour = document.createElement('span');
-  const weekly = document.createElement('span');
+  const fiveHour = createQuotaMetric(
+    '5H',
+    account.fiveHour,
+    formatMaybeTime
+  );
+  const weekly = createQuotaMetric(
+    'Week',
+    account.weekly,
+    formatMaybeShortDate
+  );
   const effective = document.createElement('time');
 
   identity.className = 'account-identity';
   numbers.className = 'account-metrics';
-  fiveHour.className = 'account-metric';
-  weekly.className = 'account-metric';
+  effective.className = 'account-effective';
   title.textContent = account.email;
   detail.textContent = account.quotaKnown
     ? `${account.plan.toUpperCase()} ${separator()} ${account.available ? t('ready') : t('limited')}`
     : `${account.provider || 'codex'} ${separator()} ${accountErrorText(account.error)}`;
-  fiveHour.textContent = `5H ${account.fiveHour.remainingPercent}%`;
-  weekly.textContent = `Week ${account.weekly.remainingPercent}%`;
   effective.textContent = account.quotaKnown ? `${account.effectiveRemainingPercent}%` : '--';
+  effective.title = t('effective');
 
   identity.append(title, detail);
   numbers.append(fiveHour, weekly, effective);
   item.append(identity, numbers);
   return item;
+}
+
+function createQuotaMetric(label, quotaWindow, resetFormatter) {
+  const metric = document.createElement('span');
+  const main = document.createElement('span');
+  const reset = document.createElement('small');
+  const value = quotaWindow?.known ? `${quotaWindow.remainingPercent}%` : '--';
+
+  metric.className = 'account-metric account-quota-metric';
+  main.className = 'account-metric-main';
+  reset.className = 'account-metric-reset';
+  main.textContent = `${label} ${value}`;
+  reset.textContent = `${t('resetAt')} ${resetFormatter(quotaWindow?.resetAt)}`;
+
+  metric.append(main, reset);
+  return metric;
 }
 
 function renderAccounts(snapshot) {

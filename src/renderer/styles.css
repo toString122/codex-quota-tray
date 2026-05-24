@@ -475,20 +475,20 @@ li time {
 }
 
 .account-list {
-  gap: 9px;
+  gap: 8px;
 }
 
 .account-row {
   align-items: stretch;
-  gap: 10px;
+  gap: 8px;
   grid-template-columns: minmax(0, 1fr);
-  min-height: 86px;
-  padding: 12px 16px;
+  min-height: 96px;
+  padding: 10px 14px;
 }
 
 .account-identity {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -516,8 +516,8 @@ li time {
 .account-metrics {
   align-items: center;
   display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(56px, max-content) minmax(70px, max-content) 46px;
+  gap: 7px;
+  grid-template-columns: minmax(82px, max-content) minmax(116px, max-content) 46px;
   justify-content: end;
   justify-items: end;
   min-width: 0;
@@ -526,16 +526,34 @@ li time {
 .account-metric {
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid rgba(213, 221, 220, 0.86);
-  border-radius: 999px;
+  border-radius: 8px;
   color: var(--muted);
-  padding: 5px 8px;
-  text-align: center;
+  padding: 5px 7px;
+  text-align: left;
   white-space: nowrap;
+}
+
+.account-quota-metric {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-metric-main {
+  color: var(--ink);
+  font: 800 11px/1.1 "Cascadia Code", Consolas, monospace;
+}
+
+.account-metric-reset {
+  color: var(--muted);
+  font: 800 10px/1.15 "Segoe UI Variable", "Segoe UI", sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-row time {
   background: rgba(39, 93, 159, 0.09);
-  border-radius: 999px;
+  border-radius: 8px;
   color: var(--blue);
   min-width: 46px;
   padding: 5px 7px;
@@ -607,14 +625,22 @@ li time {
   }
 
   .account-metrics {
-    gap: 6px;
-    grid-template-columns: minmax(52px, max-content) minmax(66px, max-content) 42px;
+    gap: 5px;
+    grid-template-columns: minmax(76px, 1fr) minmax(94px, 1fr) 42px;
   }
 
   .account-metric,
   .account-row time {
     font-size: 10px;
     padding-inline: 6px;
+  }
+
+  .account-metric-main {
+    font-size: 10px;
+  }
+
+  .account-metric-reset {
+    font-size: 9px;
   }
 
   .account-toolbar {
