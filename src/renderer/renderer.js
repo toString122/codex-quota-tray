@@ -328,37 +328,29 @@ function createAccountItem(account) {
     account.weekly,
     formatMaybeShortDate
   );
-  const effective = document.createElement('time');
 
   identity.className = 'account-identity';
   numbers.className = 'account-metrics';
-  effective.className = 'account-effective';
+  item.classList.toggle('is-unavailable', !account.available);
   title.textContent = account.email;
+  title.title = account.email;
   detail.textContent = account.quotaKnown
     ? `${account.plan.toUpperCase()} ${separator()} ${account.available ? t('ready') : t('limited')}`
     : `${account.provider || 'codex'} ${separator()} ${accountErrorText(account.error)}`;
-  effective.textContent = account.quotaKnown ? `${account.effectiveRemainingPercent}%` : '--';
-  effective.title = t('effective');
 
   identity.append(title, detail);
-  numbers.append(fiveHour, weekly, effective);
+  numbers.append(fiveHour, weekly);
   item.append(identity, numbers);
   return item;
 }
 
 function createQuotaMetric(label, quotaWindow, resetFormatter) {
   const metric = document.createElement('span');
-  const main = document.createElement('span');
-  const reset = document.createElement('small');
   const value = quotaWindow?.known ? `${quotaWindow.remainingPercent}%` : '--';
 
   metric.className = 'account-metric account-quota-metric';
-  main.className = 'account-metric-main';
-  reset.className = 'account-metric-reset';
-  main.textContent = `${label} ${value}`;
-  reset.textContent = `${t('resetAt')} ${resetFormatter(quotaWindow?.resetAt)}`;
-
-  metric.append(main, reset);
+  metric.textContent = `${label} ${value}`;
+  metric.title = `${t('resetAt')} ${resetFormatter(quotaWindow?.resetAt)}`;
   return metric;
 }
 

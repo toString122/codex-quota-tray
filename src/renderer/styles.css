@@ -475,26 +475,30 @@ li time {
 }
 
 .account-list {
-  gap: 8px;
+  gap: 7px;
 }
 
 .account-row {
-  align-items: stretch;
-  gap: 8px;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 96px;
-  padding: 10px 14px;
+  align-items: center;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 64px;
+  padding: 10px 12px;
+}
+
+.account-row.is-unavailable {
+  background: rgba(238, 242, 241, 0.54);
 }
 
 .account-identity {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
 .account-identity strong {
-  font-size: 17px;
-  line-height: 1.05;
+  font-size: 15px;
+  line-height: 1.12;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -503,7 +507,7 @@ li time {
 
 .account-identity span {
   font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.15;
@@ -516,8 +520,8 @@ li time {
 .account-metrics {
   align-items: center;
   display: grid;
-  gap: 7px;
-  grid-template-columns: minmax(82px, max-content) minmax(116px, max-content) 46px;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(66px, max-content));
   justify-content: end;
   justify-items: end;
   min-width: 0;
@@ -526,39 +530,19 @@ li time {
 .account-metric {
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid rgba(213, 221, 220, 0.86);
-  border-radius: 8px;
+  border-radius: 999px;
   color: var(--muted);
-  padding: 5px 7px;
-  text-align: left;
+  font: 800 11px/1 "Cascadia Code", Consolas, monospace;
+  padding: 6px 9px;
+  text-align: center;
   white-space: nowrap;
 }
 
 .account-quota-metric {
-  display: grid;
-  gap: 2px;
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
   min-width: 0;
-}
-
-.account-metric-main {
-  color: var(--ink);
-  font: 800 11px/1.1 "Cascadia Code", Consolas, monospace;
-}
-
-.account-metric-reset {
-  color: var(--muted);
-  font: 800 10px/1.15 "Segoe UI Variable", "Segoe UI", sans-serif;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.account-row time {
-  background: rgba(39, 93, 159, 0.09);
-  border-radius: 8px;
-  color: var(--blue);
-  min-width: 46px;
-  padding: 5px 7px;
-  text-align: center;
-  white-space: nowrap;
 }
 
 .account-empty {
@@ -617,30 +601,24 @@ li time {
   }
 
   .account-row {
-    padding: 11px 12px;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 10px 12px;
   }
 
   .account-identity strong {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .account-metrics {
-    gap: 5px;
-    grid-template-columns: minmax(76px, 1fr) minmax(94px, 1fr) 42px;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(66px, max-content));
+    justify-content: start;
+    justify-items: start;
   }
 
-  .account-metric,
-  .account-row time {
+  .account-metric {
     font-size: 10px;
     padding-inline: 6px;
-  }
-
-  .account-metric-main {
-    font-size: 10px;
-  }
-
-  .account-metric-reset {
-    font-size: 9px;
   }
 
   .account-toolbar {
