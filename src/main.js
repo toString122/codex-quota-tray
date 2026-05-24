@@ -39,9 +39,8 @@ if (!gotLock) {
   });
 }
 
-app.on('window-all-closed', () => {});
-
 app.on('before-quit', () => {
+  app.isQuitting = true;
   if (refreshTimer) clearInterval(refreshTimer);
 });
 
