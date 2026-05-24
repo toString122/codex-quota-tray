@@ -395,6 +395,49 @@ h1 {
   font: 700 11px/1 "Cascadia Code", Consolas, monospace;
 }
 
+.account-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.account-toolbar > span {
+  color: var(--muted);
+  font: 700 11px/1 "Cascadia Code", Consolas, monospace;
+  white-space: nowrap;
+}
+
+.segmented-control {
+  background: rgba(238, 242, 241, 0.88);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 2px;
+}
+
+.segment {
+  background: transparent;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  min-height: 24px;
+  padding: 0 9px;
+}
+
+.segment:hover {
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: none;
+  color: var(--ink);
+  transform: none;
+}
+
+.segment.is-active {
+  background: var(--ink);
+  color: #fff;
+}
+
 ol {
   display: flex;
   flex-direction: column;
@@ -459,6 +502,11 @@ li time {
 }
 
 .account-identity span {
+  font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.15;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -493,6 +541,15 @@ li time {
   padding: 5px 7px;
   text-align: center;
   white-space: nowrap;
+}
+
+.account-empty {
+  color: var(--muted);
+  display: flex;
+  font-size: 13px;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 58px;
 }
 
 .status-warn {
@@ -558,5 +615,15 @@ li time {
   .account-row time {
     font-size: 10px;
     padding-inline: 6px;
+  }
+
+  .account-toolbar {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .segment {
+    padding-inline: 7px;
   }
 }

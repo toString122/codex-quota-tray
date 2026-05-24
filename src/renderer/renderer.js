@@ -20,6 +20,8 @@ const elements = {
   todayCostDetail: document.querySelector('#todayCostDetail'),
   accountSummary: document.querySelector('#accountSummary'),
   accountList: document.querySelector('#accountList'),
+  accountFilterReady: document.querySelector('#accountFilterReady'),
+  accountFilterAll: document.querySelector('#accountFilterAll'),
   configPanel: document.querySelector('#configPanel'),
   configState: document.querySelector('#configState'),
   baseUrlInput: document.querySelector('#baseUrlInput'),
@@ -44,6 +46,7 @@ let activeLanguage = 'zh';
 let activeConfig = {};
 let lastSnapshot = null;
 let configMessageKey = 'configStored';
+let accountFilter = 'ready';
 
 const translations = {
   zh: {
@@ -69,6 +72,9 @@ const translations = {
     fiveHourPool: '5H 池',
     weekPool: 'Week 池',
     accountDetails: 'Plus 账号明细',
+    filterReady: '可用',
+    filterAll: '全部',
+    noAccounts: '没有匹配账号',
     refresh: '刷新',
     activity: '刷新记录',
     configured: '已配置',
@@ -126,6 +132,9 @@ const translations = {
     fiveHourPool: '5H pool',
     weekPool: 'Week pool',
     accountDetails: 'Plus accounts',
+    filterReady: 'Ready',
+    filterAll: 'All',
+    noAccounts: 'No matching accounts',
     refresh: 'Refresh',
     activity: 'Refresh log',
     configured: 'Configured',
@@ -216,6 +225,14 @@ elements.openApiButton.addEventListener('click', () => {
   window.codexQuota.openApiUsage();
 });
 
+elements.accountFilterReady.addEventListener('click', () => {
+  setAccountFilter('ready');
+});
+
+elements.accountFilterAll.addEventListener('click', () => {
+  setAccountFilter('all');
+});
+
 function render(snapshot) {
   if (!snapshot) return;
   lastSnapshot = snapshot;
@@ -253,11 +270,7 @@ function render(snapshot) {
     `${t('nextReset')} ${formatMaybeShortDate(snapshot.pool.weekly.nextResetAt)}`;
   renderUsage(snapshot.usage);
 
-  elements.accountSummary.textContent =
-    `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ${t('ready')}`;
-  elements.accountList.replaceChildren(
-    ...snapshot.accounts.map((account) => createAccountItem(account))
-  );
+  renderAccounts(snapshot);
 
   elements.updatedAt.textContent = formatClock(snapshot.updatedAt);
   elements.eventList.replaceChildren(
@@ -312,6 +325,37 @@ function createAccountItem(account) {
   numbers.append(fiveHour, weekly, effective);
   item.append(identity, numbers);
   return item;
+}
+
+function renderAccounts(snapshot) {
+  const accounts = Array.isArray(snapshot.accounts) ? snapshot.accounts : [];
+  const visibleAccounts = accountFilter === 'ready'
+    ? accounts.filter((account) => account.available)
+    : accounts;
+
+  elements.accountSummary.textContent =
+    `${visibleAccounts.length}/${accounts.length} ${accountFilter === 'ready' ? t('filterReady') : t('filterAll')}`;
+  elements.accountList.replaceChildren(
+    ...(visibleAccounts.length
+      ? visibleAccounts.map((account) => createAccountItem(account))
+      : [createEmptyAccountItem()])
+  );
+}
+
+function createEmptyAccountItem() {
+  const item = document.createElement('li');
+  item.className = 'account-empty';
+  item.textContent = t('noAccounts');
+  return item;
+}
+
+function setAccountFilter(nextFilter) {
+  accountFilter = nextFilter === 'all' ? 'all' : 'ready';
+  elements.accountFilterReady.classList.toggle('is-active', accountFilter === 'ready');
+  elements.accountFilterAll.classList.toggle('is-active', accountFilter === 'all');
+  if (lastSnapshot) {
+    render(lastSnapshot);
+  }
 }
 
 function renderUsage(usage) {
