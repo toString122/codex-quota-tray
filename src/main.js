@@ -39,9 +39,7 @@ if (!gotLock) {
   });
 }
 
-app.on('window-all-closed', (event) => {
-  event.preventDefault();
-});
+app.on('window-all-closed', () => {});
 
 app.on('before-quit', () => {
   if (refreshTimer) clearInterval(refreshTimer);
@@ -73,6 +71,10 @@ function createWindow() {
   });
 
   window.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  window.once('ready-to-show', () => {
+    window.show();
+    window.focus();
+  });
   window.on('close', (event) => {
     if (!app.isQuitting) {
       event.preventDefault();
