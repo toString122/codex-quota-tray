@@ -2,9 +2,23 @@
 
 [中文](README.md) | [English](README.en.md)
 
-Windows 托盘状态栏工具，通过 CLIProxyAPI 汇总多个 ChatGPT Codex Plus 账号的 5H 额度、Week 额度、今日 token 用量和估算金额。
+基于 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 的 Windows 托盘状态栏工具，用于汇总多个 ChatGPT Codex Plus 账号的 5H 额度、Week 额度、今日 token 用量和估算金额。
 
 > 这不是 OpenAI 官方工具，不读取 OpenAI Billing。今日金额是基于 token 和 OpenAI API 标准价格的本地估算，不是 ChatGPT Plus 账单。
+
+## 预览
+
+![Codex Quota Tray 状态条截图](171204.png)
+
+## CLIProxyAPI 依赖
+
+余量信息必须通过 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 才能读取。本工具不会直接登录 ChatGPT，也不会直接管理 Codex 账号；它通过 CLIProxyAPI 的 Management API 获取已托管账号列表，并让 CLIProxyAPI 代理请求 ChatGPT usage 接口后汇总展示余量。
+
+使用前请先确认：
+
+- CLIProxyAPI 已运行。
+- CLIProxyAPI Management API 地址和管理密钥可用。
+- 需要查看余量的 Codex 账号已经托管到 CLIProxyAPI。
 
 ## 功能
 
@@ -189,16 +203,6 @@ npm install
 
 确认已开启 `今日统计`，有新请求经过 CLIProxyAPI，并且没有其它工具消费 `usage-queue`。
 
-### 中文乱码
-
-项目文件必须使用 UTF-8 编码。
-
-## 安全
-
-- 不要把 Management API key 提交到 GitHub。
-- 管理密钥只保存在本机 Electron `userData`。
-- 支持 `safeStorage` 时，管理密钥会加密保存。
-- 开机自启只保存启动应用所需的本地路径，不保存管理密钥。
 
 ## License
 

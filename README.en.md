@@ -2,9 +2,23 @@
 
 [English](README.en.md) | [中文](README.md)
 
-A Windows tray utility that monitors multiple ChatGPT Codex Plus accounts through CLIProxyAPI. It summarizes 5H quota, Week quota, daily token usage, and estimated daily cost.
+A Windows tray utility based on [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). It monitors multiple ChatGPT Codex Plus accounts and summarizes 5H quota, Week quota, daily token usage, and estimated daily cost.
 
 > This is not an official OpenAI tool and does not read OpenAI Billing. Daily cost is a local estimate based on token usage and OpenAI API standard pricing, not a ChatGPT Plus invoice.
+
+## Preview
+
+![Codex Quota Tray status bar screenshot](171204.png)
+
+## CLIProxyAPI Dependency
+
+Quota information is available only through [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). This app does not sign in to ChatGPT directly and does not manage Codex accounts by itself. It reads hosted accounts through the CLIProxyAPI Management API, asks CLIProxyAPI to proxy the ChatGPT usage request, and then summarizes the returned quota data.
+
+Before using this app, make sure:
+
+- CLIProxyAPI is running.
+- The CLIProxyAPI Management API URL and management key are available.
+- The Codex accounts you want to monitor are already hosted in CLIProxyAPI.
 
 ## Features
 
@@ -188,17 +202,6 @@ Make sure CLIProxyAPI has hosted Codex accounts, then switch the account filter 
 ### Daily Tokens Stay at 0
 
 Make sure `Today stats` is enabled, new requests are going through CLIProxyAPI, and no other tool is consuming `usage-queue`.
-
-### Garbled Chinese Text
-
-Project files must use UTF-8 encoding.
-
-## Security
-
-- Do not commit your Management API key to GitHub.
-- The management key is stored only in local Electron `userData`.
-- When `safeStorage` is available, the management key is encrypted.
-- Launch at startup stores only the local app launch path, not your management key.
 
 ## License
 
