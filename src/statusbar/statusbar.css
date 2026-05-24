@@ -1,0 +1,121 @@
+:root {
+  color-scheme: dark;
+  --good: #31c48d;
+  --warn: #f1a33c;
+  --danger: #ff5d63;
+  --ink: #f7fbff;
+  --muted: #9aa8b2;
+  --surface: rgba(17, 22, 27, 0.94);
+  --line: rgba(255, 255, 255, 0.12);
+  --accent: var(--good);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+body {
+  background: transparent;
+  font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+
+.status-strip {
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent),
+    var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 10px 1fr 42px;
+  height: 100%;
+  padding: 7px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.status-strip:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.status-light {
+  background: var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 0 14px var(--accent);
+  height: 10px;
+  width: 10px;
+}
+
+.status-lines {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.line {
+  align-items: baseline;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 46px 1fr;
+  min-width: 0;
+}
+
+.line strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.line span,
+.status-badge {
+  font-family: "Cascadia Code", Consolas, monospace;
+  letter-spacing: 0;
+}
+
+.line span {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-badge {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: var(--accent);
+  display: flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  width: 42px;
+}
+
+.status-good {
+  --accent: var(--good);
+}
+
+.status-warn {
+  --accent: var(--warn);
+}
+
+.status-danger {
+  --accent: var(--danger);
+}

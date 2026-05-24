@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('codexQuota', {
   refresh: () => ipcRenderer.invoke('quota:refresh'),
   consumeCodex: () => ipcRenderer.invoke('quota:consume-codex'),
   resetMock: () => ipcRenderer.invoke('quota:reset-mock'),
+  showPanel: () => ipcRenderer.invoke('window:show-panel'),
+  hideStatusBar: () => ipcRenderer.invoke('statusbar:hide'),
   openCodexUsage: () => ipcRenderer.invoke('link:open-codex-usage'),
   openApiUsage: () => ipcRenderer.invoke('link:open-api-usage'),
   onUpdate: (callback) => {

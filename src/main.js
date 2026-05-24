@@ -8,6 +8,7 @@ const {
   Notification,
   Tray,
   ipcMain,
+  screen,
   shell
 } = require('electron');
 const { MockQuotaProvider } = require('./quotaProvider');
@@ -17,9 +18,16 @@ const provider = new MockQuotaProvider();
 
 let tray = null;
 let window = null;
+let statusBarWindow = null;
 let snapshot = provider.getSnapshot();
 let refreshTimer = null;
 let notifiedStatus = 'good';
+let statusBarVisible = true;
+
+const STATUS_BAR_SIZE = {
+  width: 330,
+  height: 52
+};
 
 const gotLock = app.requestSingleInstanceLock();
 
@@ -34,8 +42,10 @@ if (!gotLock) {
     app.setAppUserModelId('local.codex-quota-tray');
     createTray();
     createWindow();
+    createStatusBarWindow();
     updateQuota('startup');
     refreshTimer = setInterval(() => updateQuota('timer'), 1000 * 20);
+    screen.on('display-metrics-changed', positionStatusBar);
   });
 }
 
@@ -70,15 +80,47 @@ function createWindow() {
   });
 
   window.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  window.once('ready-to-show', () => {
-    window.show();
-    window.focus();
-  });
   window.on('close', (event) => {
     if (!app.isQuitting) {
       event.preventDefault();
       window.hide();
     }
+  });
+}
+
+function createStatusBarWindow() {
+  statusBarWindow = new BrowserWindow({
+    width: STATUS_BAR_SIZE.width,
+    height: STATUS_BAR_SIZE.height,
+    show: false,
+    frame: false,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    transparent: true,
+    hasShadow: false,
+    title: 'Codex Quota Status',
+    backgroundColor: '#00000000',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  statusBarWindow.setAlwaysOnTop(true, 'status');
+  statusBarWindow.loadFile(path.join(__dirname, 'statusbar', 'index.html'));
+  statusBarWindow.once('ready-to-show', () => {
+    positionStatusBar();
+    if (statusBarVisible) {
+      statusBarWindow.showInactive();
+    }
+    statusBarWindow.webContents.send('quota:update', snapshot);
+  });
+  statusBarWindow.on('closed', () => {
+    statusBarWindow = null;
   });
 }
 
@@ -102,6 +144,13 @@ function updateQuota(reason) {
     window.webContents.send('quota:update', snapshot);
   }
 
+  if (statusBarWindow && !statusBarWindow.isDestroyed()) {
+    statusBarWindow.webContents.send('quota:update', snapshot);
+    if (statusBarVisible) {
+      positionStatusBar();
+    }
+  }
+
   if (reason !== 'startup') {
     maybeNotify(snapshot);
   }
@@ -123,6 +172,12 @@ function rebuildTrayMenu() {
     {
       label: '显示状态面板',
       click: showWindow
+    },
+    {
+      label: statusBarVisible ? '隐藏常驻文字' : '显示常驻文字',
+      type: 'checkbox',
+      checked: statusBarVisible,
+      click: (menuItem) => setStatusBarVisible(menuItem.checked)
     },
     {
       label: '刷新模拟数据',
@@ -166,6 +221,42 @@ function rebuildTrayMenu() {
   tray.setContextMenu(contextMenu);
 }
 
+function setStatusBarVisible(visible) {
+  statusBarVisible = visible;
+
+  if (!statusBarWindow || statusBarWindow.isDestroyed()) {
+    createStatusBarWindow();
+  }
+
+  if (statusBarVisible) {
+    positionStatusBar();
+    statusBarWindow.showInactive();
+    statusBarWindow.webContents.send('quota:update', snapshot);
+  } else {
+    statusBarWindow.hide();
+  }
+
+  if (tray) {
+    rebuildTrayMenu();
+  }
+}
+
+function positionStatusBar() {
+  if (!statusBarWindow || statusBarWindow.isDestroyed()) return;
+
+  const display = screen.getPrimaryDisplay();
+  const margin = 10;
+  const x = display.workArea.x + display.workArea.width - STATUS_BAR_SIZE.width - margin;
+  const y = display.workArea.y + display.workArea.height - STATUS_BAR_SIZE.height - margin;
+
+  statusBarWindow.setBounds({
+    x: Math.round(x),
+    y: Math.round(y),
+    width: STATUS_BAR_SIZE.width,
+    height: STATUS_BAR_SIZE.height
+  });
+}
+
 function maybeNotify(nextSnapshot) {
   if (nextSnapshot.status === notifiedStatus) return;
   notifiedStatus = nextSnapshot.status;
@@ -200,6 +291,15 @@ ipcMain.handle('quota:consume-codex', () => {
 ipcMain.handle('quota:reset-mock', () => {
   provider.reset();
   return updateQuota('reset');
+});
+
+ipcMain.handle('window:show-panel', () => {
+  showWindow();
+});
+
+ipcMain.handle('statusbar:hide', () => {
+  setStatusBarVisible(false);
+  return statusBarVisible;
 });
 
 ipcMain.handle('link:open-codex-usage', () => {
