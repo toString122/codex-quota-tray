@@ -11,6 +11,7 @@
     "bin",
     "src",
     "README.md",
+    "README.en.md",
     "LICENSE"
   ],
   "scripts": {

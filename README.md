@@ -1,5 +1,7 @@
 # Codex Quota Tray
 
+[中文](README.md) | [English](README.en.md)
+
 一个 Windows 托盘小工具，用于通过 CLIProxyAPI 汇总查看多个 ChatGPT Codex Plus 账号的 5H 额度、Week 额度、今日 token 用量和估算金额。
 
 项目基于 Node.js 和 Electron。启动后会显示一个托盘图标，并在桌面角落显示可配置的常驻状态条。
