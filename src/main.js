@@ -248,7 +248,7 @@ function rebuildTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: '打开 CLIProxyAPI',
+      label: t('openCliProxyApi'),
       click: () => shell.openExternal(configStore.getPublicConfig().baseUrl)
     },
     { type: 'separator' },
@@ -579,6 +579,7 @@ function t(key) {
       hideStatusText: '隐藏常驻文字',
       showStatusText: '显示常驻文字',
       refreshQuota: '刷新真实额度',
+      openCliProxyApi: '打开 CLIProxyAPI',
       quit: '退出',
       quotaNotificationTitle: 'Codex 余量提醒',
       effectiveQuota: 'Codex Plus 账号池有效余量',
@@ -598,6 +599,7 @@ function t(key) {
       hideStatusText: 'Hide status text',
       showStatusText: 'Show status text',
       refreshQuota: 'Refresh quota',
+      openCliProxyApi: 'Open CLIProxyAPI',
       quit: 'Quit',
       quotaNotificationTitle: 'Codex quota alert',
       effectiveQuota: 'Codex Plus pool effective quota',

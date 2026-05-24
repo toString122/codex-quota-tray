@@ -42,6 +42,8 @@ const elements = {
 
 let activeLanguage = 'zh';
 let activeConfig = {};
+let lastSnapshot = null;
+let configMessageKey = 'configStored';
 
 const translations = {
   zh: {
@@ -82,8 +84,11 @@ const translations = {
     measured: '已测',
     bottleneck: '瓶颈',
     nextReset: 'Next reset',
+    inputShort: '入',
+    outputShort: '出',
     ready: '可用',
     limited: '受限',
+    unavailable: '不可用',
     quotaUnknown: '额度未知',
     opacity: '背景透明度',
     todayTokens: '今日 Tokens',
@@ -93,7 +98,10 @@ const translations = {
     estimated: '估算',
     requests: '请求',
     priced: '已计价',
-    unknownModels: '未知模型'
+    unknownModels: '未知模型',
+    refreshFailed: '刷新失败',
+    refreshed: 'CLIProxyAPI 已刷新',
+    configRequired: '需要配置'
   },
   en: {
     normal: 'Normal',
@@ -133,8 +141,11 @@ const translations = {
     measured: 'Measured',
     bottleneck: 'Limit',
     nextReset: 'Next reset',
+    inputShort: 'in',
+    outputShort: 'out',
     ready: 'ready',
     limited: 'limited',
+    unavailable: 'unavailable',
     quotaUnknown: 'quota unknown',
     opacity: 'Background opacity',
     todayTokens: 'Today tokens',
@@ -144,7 +155,10 @@ const translations = {
     estimated: 'estimated',
     requests: 'requests',
     priced: 'priced',
-    unknownModels: 'unknown models'
+    unknownModels: 'unknown models',
+    refreshFailed: 'Refresh failed',
+    refreshed: 'CLIProxyAPI refreshed',
+    configRequired: 'Configuration required'
   }
 };
 
@@ -159,7 +173,7 @@ elements.refreshButton.addEventListener('click', async () => {
 
 elements.saveConfigButton.addEventListener('click', async () => {
   elements.saveConfigButton.disabled = true;
-  elements.configMessage.textContent = t('saving');
+  setConfigMessage('saving');
   try {
     const result = await window.codexQuota.saveConfig({
       baseUrl: elements.baseUrlInput.value,
@@ -174,9 +188,13 @@ elements.saveConfigButton.addEventListener('click', async () => {
     elements.managementKeyInput.value = '';
     renderConfig(result.config);
     render(result.snapshot);
-    elements.configMessage.textContent = t('saved');
+    setConfigMessage('saved');
   } catch (error) {
-    elements.configMessage.textContent = error.message || t('saveFailed');
+    if (error.message) {
+      setConfigMessageText(error.message);
+    } else {
+      setConfigMessage('saveFailed');
+    }
   } finally {
     elements.saveConfigButton.disabled = false;
   }
@@ -200,6 +218,7 @@ elements.openApiButton.addEventListener('click', () => {
 
 function render(snapshot) {
   if (!snapshot) return;
+  lastSnapshot = snapshot;
 
   const statusClass = `status-${snapshot.status}`;
   document.body.classList.remove('status-good', 'status-warn', 'status-danger');
@@ -208,9 +227,9 @@ function render(snapshot) {
   elements.statusText.textContent = statusLabel(snapshot.status);
   elements.configPanel.classList.toggle('needs-config', !snapshot.configured);
   if (!snapshot.configured) {
-    elements.configMessage.textContent = t('needConfig');
+    setConfigMessage('needConfig');
   } else if (snapshot.events[0]?.label === 'CLIProxyAPI refresh failed') {
-    elements.configMessage.textContent = snapshot.events[0].detail;
+    setConfigMessageText(snapshot.events[0].detail);
   }
 
   elements.codexPercent.textContent = `${snapshot.pool.effectivePercent}%`;
@@ -221,7 +240,7 @@ function render(snapshot) {
   elements.codexRemaining.textContent =
     `5H ${snapshot.pool.fiveHour.remainingPercent}% / Week ${snapshot.pool.weekly.remainingPercent}%`;
   elements.codexReset.textContent =
-    `${t('available')} ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} · ${t('measured')} ${snapshot.pool.measuredAccounts}/${snapshot.pool.totalAccounts} · ${t('bottleneck')} ${snapshot.pool.bottleneck}`;
+    `${t('available')} ${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ${separator()} ${t('measured')} ${snapshot.pool.measuredAccounts}/${snapshot.pool.totalAccounts} ${separator()} ${t('bottleneck')} ${snapshot.pool.bottleneck}`;
 
   elements.apiPercent.textContent = `${snapshot.pool.fiveHour.remainingPercent}%`;
   elements.apiBar.style.width = `${snapshot.pool.fiveHour.remainingPercent}%`;
@@ -235,7 +254,7 @@ function render(snapshot) {
   renderUsage(snapshot.usage);
 
   elements.accountSummary.textContent =
-    `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ready`;
+    `${snapshot.pool.availableAccounts}/${snapshot.pool.totalAccounts} ${t('ready')}`;
   elements.accountList.replaceChildren(
     ...snapshot.accounts.map((account) => createAccountItem(account))
   );
@@ -279,8 +298,8 @@ function createAccountItem(account) {
 
   title.textContent = account.email;
   detail.textContent = account.quotaKnown
-    ? `${account.plan.toUpperCase()} · ${account.available ? t('ready') : t('limited')}`
-    : `${account.provider || 'codex'} · ${account.error || t('quotaUnknown')}`;
+    ? `${account.plan.toUpperCase()} ${separator()} ${account.available ? t('ready') : t('limited')}`
+    : `${account.provider || 'codex'} ${separator()} ${accountErrorText(account.error)}`;
   fiveHour.textContent = `5H ${account.fiveHour.remainingPercent}%`;
   weekly.textContent = `Week ${account.weekly.remainingPercent}%`;
   effective.textContent = account.quotaKnown ? `${account.effectiveRemainingPercent}%` : '--';
@@ -303,15 +322,15 @@ function renderUsage(usage) {
   const today = usage.today || {};
   elements.todayTokens.textContent = formatTokens(today.totalTokens);
   elements.todayTokensDetail.textContent =
-    `in ${formatTokens(today.inputTokens)} / out ${formatTokens(today.outputTokens)}`;
+    `${t('inputShort')} ${formatTokens(today.inputTokens)} / ${t('outputShort')} ${formatTokens(today.outputTokens)}`;
   elements.todayCost.textContent = formatUsd(today.estimatedUsd);
   elements.todayCostDetail.textContent =
-    `${t('estimated')} · ${t('requests')} ${today.requestCount || 0} · ${t('priced')} ${today.pricedRequestCount || 0}/${today.requestCount || 0}`;
+    `${t('estimated')} ${separator()} ${t('requests')} ${today.requestCount || 0} ${separator()} ${t('priced')} ${today.pricedRequestCount || 0}/${today.requestCount || 0}`;
 
   if (usage.error) {
     elements.todayCostDetail.textContent = usage.error;
   } else if (today.unknownModelCount > 0) {
-    elements.todayCostDetail.textContent += ` · ${t('unknownModels')} ${today.unknownModelCount}`;
+    elements.todayCostDetail.textContent += ` ${separator()} ${t('unknownModels')} ${today.unknownModelCount}`;
   }
 }
 
@@ -327,6 +346,12 @@ function applyLanguage() {
     ? t('configured')
     : t('unconfigured');
   updateOpacityLabel();
+  if (lastSnapshot) {
+    render(lastSnapshot);
+  }
+  if (configMessageKey) {
+    elements.configMessage.textContent = t(configMessageKey);
+  }
 }
 
 function updateOpacityLabel() {
@@ -363,6 +388,28 @@ function t(key) {
   return translations[activeLanguage]?.[key] || translations.zh[key] || key;
 }
 
+function setConfigMessage(key) {
+  configMessageKey = key;
+  elements.configMessage.textContent = t(key);
+}
+
+function setConfigMessageText(value) {
+  configMessageKey = '';
+  elements.configMessage.textContent = value;
+}
+
+function separator() {
+  return '·';
+}
+
+function accountErrorText(error) {
+  const normalized = String(error || '').toLowerCase();
+  if (normalized.includes('disabled') || normalized.includes('unavailable')) {
+    return t('unavailable');
+  }
+  return error || t('quotaUnknown');
+}
+
 function createEventItem(event) {
   const item = document.createElement('li');
   const copy = document.createElement('div');
@@ -370,7 +417,7 @@ function createEventItem(event) {
   const detail = document.createElement('span');
   const time = document.createElement('time');
 
-  title.textContent = event.label;
+  title.textContent = eventLabel(event.label);
   detail.textContent = event.detail;
   time.textContent = formatClock(event.at);
 
@@ -380,7 +427,7 @@ function createEventItem(event) {
 }
 
 function formatTime(value) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(locale(), {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value));
@@ -391,7 +438,7 @@ function formatMaybeTime(value) {
 }
 
 function formatClock(value) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(locale(), {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
@@ -399,7 +446,7 @@ function formatClock(value) {
 }
 
 function formatShortDate(value) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(locale(), {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -409,4 +456,15 @@ function formatShortDate(value) {
 
 function formatMaybeShortDate(value) {
   return value ? formatShortDate(value) : '--';
+}
+
+function eventLabel(label) {
+  if (label === 'CLIProxyAPI refresh failed') return t('refreshFailed');
+  if (label === 'CLIProxyAPI refreshed') return t('refreshed');
+  if (label === 'Configuration required') return t('configRequired');
+  return label;
+}
+
+function locale() {
+  return activeLanguage === 'en' ? 'en-US' : 'zh-CN';
 }

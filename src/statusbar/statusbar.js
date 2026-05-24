@@ -13,6 +13,7 @@ let activeConfig = {
   language: 'zh',
   statusBarOpacity: 0.88
 };
+let lastSnapshot = null;
 
 window.codexQuota.onUpdate(render);
 window.codexQuota.getSnapshot().then(render);
@@ -25,6 +26,7 @@ elements.statusStrip.addEventListener('click', () => {
 
 function render(snapshot) {
   if (!snapshot) return;
+  lastSnapshot = snapshot;
 
   document.body.classList.remove('status-good', 'status-warn', 'status-danger');
   document.body.classList.add(`status-${snapshot.status}`);
@@ -61,6 +63,9 @@ function renderConfig(config) {
   style.setProperty('--surface-hover-border-alpha', formatAlpha(opacity * 0.28));
   style.setProperty('--badge-bg-alpha', formatAlpha(opacity * 0.14));
   style.setProperty('--badge-border-alpha', formatAlpha(opacity * 0.16));
+  if (lastSnapshot) {
+    render(lastSnapshot);
+  }
 }
 
 function normalizeOpacity(value) {
@@ -74,7 +79,7 @@ function formatAlpha(value) {
 }
 
 function formatCompactTokens(usage) {
-  if (!usage?.enabled) return 'off';
+  if (!usage?.enabled) return activeConfig.language === 'en' ? 'off' : '关';
   const totalTokens = Number(usage.today?.totalTokens || 0);
   if (totalTokens >= 1_000_000) return `${trimCompact(totalTokens / 1_000_000)}M`;
   if (totalTokens >= 1_000) return `${trimCompact(totalTokens / 1_000)}K`;
