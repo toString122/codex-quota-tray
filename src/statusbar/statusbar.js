@@ -60,7 +60,7 @@ function renderConfig(config) {
 function normalizeOpacity(value) {
   const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed)) return 0.88;
-  return Math.min(Math.max(parsed, 0.2), 1);
+  return Math.min(Math.max(parsed, 0), 1);
 }
 
 function formatAlpha(value) {

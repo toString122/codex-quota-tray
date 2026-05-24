@@ -171,7 +171,7 @@ function normalizeStatusBarPosition(value) {
 function normalizeStatusBarOpacity(value) {
   const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed)) return DEFAULT_STATUS_BAR_OPACITY;
-  return Math.min(Math.max(parsed, 0.2), 1);
+  return Math.min(Math.max(parsed, 0), 1);
 }
 
 module.exports = {

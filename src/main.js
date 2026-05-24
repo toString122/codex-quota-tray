@@ -27,8 +27,8 @@ let notifiedStatus = 'good';
 let statusBarVisible = true;
 
 const STATUS_BAR_SIZE = {
-  width: 168,
-  height: 40
+  width: 150,
+  height: 32
 };
 
 const gotLock = app.requestSingleInstanceLock();
@@ -404,7 +404,7 @@ function formatInterval(seconds) {
 function normalizePreviewOpacity(value) {
   const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed)) return 0.88;
-  return Math.min(Math.max(parsed, 0.2), 1);
+  return Math.min(Math.max(parsed, 0), 1);
 }
 
 function t(key) {
