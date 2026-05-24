@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codex Quota Tray</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Mock Provider</p>
+          <h1>Codex Quota Tray</h1>
+        </div>
+        <span class="state-pill" id="statusPill">
+          <span class="state-dot"></span>
+          <span id="statusText">Normal</span>
+        </span>
+      </header>
+
+      <section class="meter-section" aria-label="Codex quota overview">
+        <div class="meter" id="codexMeter" style="--value: 0deg">
+          <div class="meter-core">
+            <span id="codexPercent">--%</span>
+            <small>Codex</small>
+          </div>
+        </div>
+        <div class="quota-copy">
+          <p class="label">ChatGPT Codex</p>
+          <strong id="codexRemaining">-- / --</strong>
+          <span id="codexReset">Reset --</span>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="Quota metrics">
+        <article class="metric">
+          <div class="metric-head">
+            <span>API 预算</span>
+            <strong id="apiPercent">--%</strong>
+          </div>
+          <div class="bar">
+            <span id="apiBar"></span>
+          </div>
+          <p id="apiBudget">$-- / $--</p>
+        </article>
+
+        <article class="metric">
+          <div class="metric-head">
+            <span>Codex 消耗</span>
+            <strong id="codexUsed">--</strong>
+          </div>
+          <div class="bar">
+            <span id="codexBar"></span>
+          </div>
+          <p id="codexLimit">Limit --</p>
+        </article>
+      </section>
+
+      <section class="actions" aria-label="Actions">
+        <button id="refreshButton" type="button">刷新</button>
+        <button id="consumeButton" type="button">模拟消耗</button>
+        <button id="resetButton" type="button">重置</button>
+      </section>
+
+      <section class="links" aria-label="External links">
+        <button id="openCodexButton" type="button">Codex</button>
+        <button id="openApiButton" type="button">API Usage</button>
+      </section>
+
+      <section class="activity" aria-label="Activity">
+        <div class="section-title">
+          <span>模拟事件</span>
+          <time id="updatedAt">--</time>
+        </div>
+        <ol id="eventList"></ol>
+      </section>
+    </main>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

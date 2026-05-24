@@ -1,0 +1,26 @@
+{
+  "name": "codex-quota-tray",
+  "version": "0.1.0",
+  "description": "Windows tray utility prototype for showing simulated ChatGPT Codex quota.",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "bin": {
+    "codex-quota-tray": "bin/codex-quota-tray.js"
+  },
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/quotaProvider.js && node --check src/trayIcon.js && node --check src/renderer/renderer.js"
+  },
+  "keywords": [
+    "codex",
+    "quota",
+    "tray",
+    "electron",
+    "windows"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.0.0"
+  }
+}
