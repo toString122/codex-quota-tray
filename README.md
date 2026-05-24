@@ -216,7 +216,7 @@ https://chatgpt.com/backend-api/wham/usage
 - `usage-queue` 是消费型队列，读取后记录会从队列移除。
 - 如果你同时运行其它消费该队列的统计工具，统计结果可能互相影响。
 - 金额是 API 等价估算，不是 ChatGPT Plus 账单。
-- 当前内置价格表覆盖常见 `gpt-5`、`gpt-4.1`、`gpt-4o` 系列。
+- 当前内置价格表参考 OpenAI Pricing 页面的 Standard 每 100 万 token 价格，覆盖 `gpt-5.5`、`gpt-5.4`、`gpt-5.2`、`chat-latest`、`gpt-5.3-codex`、`gpt-5.2-codex`、`codex-mini-latest`，并保留 `gpt-5`、`gpt-4.1`、`gpt-4o` 历史记录兜底。
 - 未知模型会计入 token，但不会计入金额。
 
 ## 本地数据保存位置

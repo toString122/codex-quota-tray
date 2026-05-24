@@ -216,7 +216,7 @@ Important notes:
 - `usage-queue` is a consumable queue. Records are removed after reading.
 - If another stats tool consumes the same queue, results can interfere with each other.
 - Cost is an API-equivalent estimate, not a ChatGPT Plus invoice.
-- The built-in price table covers common `gpt-5`, `gpt-4.1`, and `gpt-4o` model families.
+- The built-in price table follows the OpenAI Pricing page Standard per-1M-token rates for `gpt-5.5`, `gpt-5.4`, `gpt-5.2`, `chat-latest`, `gpt-5.3-codex`, `gpt-5.2-codex`, and `codex-mini-latest`, with legacy fallbacks for `gpt-5`, `gpt-4.1`, and `gpt-4o` records.
 - Unknown models count toward tokens but not toward cost.
 
 ## Local Data Location

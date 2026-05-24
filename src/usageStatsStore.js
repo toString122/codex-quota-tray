@@ -8,6 +8,78 @@ const MAX_DAYS_TO_KEEP = 14;
 
 const MODEL_PRICE_RULES = [
   {
+    pattern: /codex-mini-latest/i,
+    inputUsdPerMillion: 1.5,
+    cachedInputUsdPerMillion: 0.375,
+    outputUsdPerMillion: 6
+  },
+  {
+    pattern: /gpt-5\.5.*pro/i,
+    inputUsdPerMillion: 30,
+    cachedInputUsdPerMillion: 30,
+    outputUsdPerMillion: 180
+  },
+  {
+    pattern: /gpt-5\.5/i,
+    inputUsdPerMillion: 5,
+    cachedInputUsdPerMillion: 0.5,
+    outputUsdPerMillion: 30
+  },
+  {
+    pattern: /gpt-5\.4.*pro/i,
+    inputUsdPerMillion: 30,
+    cachedInputUsdPerMillion: 30,
+    outputUsdPerMillion: 180
+  },
+  {
+    pattern: /gpt-5\.4.*nano/i,
+    inputUsdPerMillion: 0.2,
+    cachedInputUsdPerMillion: 0.02,
+    outputUsdPerMillion: 1.25
+  },
+  {
+    pattern: /gpt-5\.4.*mini/i,
+    inputUsdPerMillion: 0.75,
+    cachedInputUsdPerMillion: 0.075,
+    outputUsdPerMillion: 4.5
+  },
+  {
+    pattern: /gpt-5\.4/i,
+    inputUsdPerMillion: 2.5,
+    cachedInputUsdPerMillion: 0.25,
+    outputUsdPerMillion: 15
+  },
+  {
+    pattern: /gpt-5\.[23].*codex/i,
+    inputUsdPerMillion: 1.75,
+    cachedInputUsdPerMillion: 0.175,
+    outputUsdPerMillion: 14
+  },
+  {
+    pattern: /gpt-5\.2.*pro/i,
+    inputUsdPerMillion: 21,
+    cachedInputUsdPerMillion: 21,
+    outputUsdPerMillion: 168
+  },
+  {
+    pattern: /gpt-5\.2/i,
+    inputUsdPerMillion: 1.75,
+    cachedInputUsdPerMillion: 0.175,
+    outputUsdPerMillion: 14
+  },
+  {
+    pattern: /chat-latest/i,
+    inputUsdPerMillion: 5,
+    cachedInputUsdPerMillion: 0.5,
+    outputUsdPerMillion: 30
+  },
+  {
+    pattern: /gpt-5.*pro/i,
+    inputUsdPerMillion: 15,
+    cachedInputUsdPerMillion: 15,
+    outputUsdPerMillion: 120
+  },
+  {
     pattern: /gpt-5.*nano/i,
     inputUsdPerMillion: 0.05,
     cachedInputUsdPerMillion: 0.005,
