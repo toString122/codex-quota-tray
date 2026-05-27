@@ -34,6 +34,7 @@ class ConfigStore {
       usageStatsEnabled: this.getUsageStatsEnabled(),
       language: this.getLanguage(),
       statusBarPosition: this.getStatusBarPosition(),
+      statusBarBounds: this.getStatusBarBounds(),
       statusBarOpacity: this.getStatusBarOpacity()
     };
   }
@@ -54,6 +55,7 @@ class ConfigStore {
       usageStatsEnabled: this.getUsageStatsEnabled(),
       language: this.getLanguage(),
       statusBarPosition: this.getStatusBarPosition(),
+      statusBarBounds: this.getStatusBarBounds(),
       statusBarOpacity: this.getStatusBarOpacity(),
       configured: Boolean(baseUrl && managementKey)
     };
@@ -62,6 +64,10 @@ class ConfigStore {
   save(nextConfig) {
     const baseUrl = normalizeBaseUrl(nextConfig.baseUrl || DEFAULT_BASE_URL);
     const managementKey = String(nextConfig.managementKey || '').trim();
+    const previousStatusBarPosition = this.getStatusBarPosition();
+    const nextStatusBarPosition = normalizeStatusBarPosition(
+      nextConfig.statusBarPosition
+    );
 
     this.config.baseUrl = baseUrl;
     this.config.autoRefreshEnabled = nextConfig.autoRefreshEnabled !== false;
@@ -71,9 +77,10 @@ class ConfigStore {
     );
     this.config.usageStatsEnabled = nextConfig.usageStatsEnabled === true;
     this.config.language = normalizeLanguage(nextConfig.language);
-    this.config.statusBarPosition = normalizeStatusBarPosition(
-      nextConfig.statusBarPosition
-    );
+    this.config.statusBarPosition = nextStatusBarPosition;
+    if (nextStatusBarPosition !== previousStatusBarPosition) {
+      delete this.config.statusBarBounds;
+    }
     this.config.statusBarOpacity = normalizeStatusBarOpacity(
       nextConfig.statusBarOpacity
     );
@@ -81,6 +88,15 @@ class ConfigStore {
       this.setManagementKey(managementKey);
     }
 
+    fs.mkdirSync(path.dirname(this.configPath), { recursive: true });
+    fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8');
+  }
+
+  saveStatusBarBounds(bounds) {
+    const normalized = normalizeStatusBarBounds(bounds);
+    if (!normalized) return;
+
+    this.config.statusBarBounds = normalized;
     fs.mkdirSync(path.dirname(this.configPath), { recursive: true });
     fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8');
   }
@@ -153,6 +169,10 @@ class ConfigStore {
     return normalizeStatusBarPosition(this.config.statusBarPosition);
   }
 
+  getStatusBarBounds() {
+    return normalizeStatusBarBounds(this.config.statusBarBounds);
+  }
+
   getStatusBarOpacity() {
     return normalizeStatusBarOpacity(this.config.statusBarOpacity);
   }
@@ -188,6 +208,19 @@ function normalizeStatusBarPosition(value) {
     return normalized;
   }
   return DEFAULT_STATUS_BAR_POSITION;
+}
+
+function normalizeStatusBarBounds(value) {
+  if (!value || typeof value !== 'object') return null;
+
+  const x = Number.parseInt(value.x, 10);
+  const y = Number.parseInt(value.y, 10);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+
+  return {
+    x,
+    y
+  };
 }
 
 function normalizeStatusBarOpacity(value) {

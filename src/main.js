@@ -34,6 +34,9 @@ let usageStatsRuntime = {
 };
 let notifiedStatus = 'good';
 let statusBarVisible = true;
+let statusBarBoundsSaveTimer = null;
+let statusBarProgrammaticMoveTimer = null;
+let statusBarProgrammaticMove = false;
 
 const STATUS_BAR_SIZE = {
   width: 186,
@@ -75,6 +78,8 @@ app.on('before-quit', () => {
   app.isQuitting = true;
   if (refreshTimer) clearInterval(refreshTimer);
   if (usageStatsTimer) clearInterval(usageStatsTimer);
+  if (statusBarBoundsSaveTimer) clearTimeout(statusBarBoundsSaveTimer);
+  if (statusBarProgrammaticMoveTimer) clearTimeout(statusBarProgrammaticMoveTimer);
 });
 
 function createTray() {
@@ -143,6 +148,7 @@ function createStatusBarWindow() {
     statusBarWindow.webContents.send('quota:update', snapshot);
     statusBarWindow.webContents.send('config:update', configStore.getPublicConfig());
   });
+  statusBarWindow.on('move', scheduleStatusBarBoundsSave);
   statusBarWindow.on('closed', () => {
     statusBarWindow = null;
   });
@@ -288,9 +294,18 @@ function setStatusBarVisible(visible) {
 function positionStatusBar() {
   if (!statusBarWindow || statusBarWindow.isDestroyed()) return;
 
+  const publicConfig = configStore.getPublicConfig();
+  const customBounds = publicConfig.statusBarBounds;
+  const bounds = customBounds
+    ? clampedStatusBarBounds(customBounds)
+    : anchoredStatusBarBounds(publicConfig.statusBarPosition);
+
+  setStatusBarWindowBounds(bounds);
+}
+
+function anchoredStatusBarBounds(position) {
   const display = screen.getPrimaryDisplay();
   const margin = 10;
-  const position = configStore.getPublicConfig().statusBarPosition;
   const left = display.workArea.x + margin;
   const right = display.workArea.x + display.workArea.width - STATUS_BAR_SIZE.width - margin;
   const top = display.workArea.y + margin;
@@ -298,12 +313,77 @@ function positionStatusBar() {
   const x = position.endsWith('left') ? left : right;
   const y = position.startsWith('top') ? top : bottom;
 
-  statusBarWindow.setBounds({
+  return {
     x: Math.round(x),
     y: Math.round(y),
     width: STATUS_BAR_SIZE.width,
     height: STATUS_BAR_SIZE.height
+  };
+}
+
+function clampedStatusBarBounds(bounds) {
+  const x = Number(bounds.x);
+  const y = Number(bounds.y);
+  const display = screen.getDisplayMatching({
+    x: Number.isFinite(x) ? x : 0,
+    y: Number.isFinite(y) ? y : 0,
+    width: STATUS_BAR_SIZE.width,
+    height: STATUS_BAR_SIZE.height
   });
+  const area = display.workArea;
+  const maxX = Math.max(area.x, area.x + area.width - STATUS_BAR_SIZE.width);
+  const maxY = Math.max(area.y, area.y + area.height - STATUS_BAR_SIZE.height);
+
+  return {
+    x: Math.round(clampNumber(x, area.x, maxX)),
+    y: Math.round(clampNumber(y, area.y, maxY)),
+    width: STATUS_BAR_SIZE.width,
+    height: STATUS_BAR_SIZE.height
+  };
+}
+
+function setStatusBarWindowBounds(bounds) {
+  statusBarProgrammaticMove = true;
+  if (statusBarProgrammaticMoveTimer) {
+    clearTimeout(statusBarProgrammaticMoveTimer);
+  }
+  statusBarWindow.setBounds(bounds);
+  statusBarProgrammaticMoveTimer = setTimeout(() => {
+    statusBarProgrammaticMove = false;
+    statusBarProgrammaticMoveTimer = null;
+  }, 250);
+}
+
+function scheduleStatusBarBoundsSave() {
+  if (
+    !configStore ||
+    !statusBarWindow ||
+    statusBarWindow.isDestroyed() ||
+    statusBarProgrammaticMove
+  ) {
+    return;
+  }
+
+  if (statusBarBoundsSaveTimer) {
+    clearTimeout(statusBarBoundsSaveTimer);
+  }
+  statusBarBoundsSaveTimer = setTimeout(saveStatusBarBounds, 350);
+}
+
+function saveStatusBarBounds() {
+  if (!configStore || !statusBarWindow || statusBarWindow.isDestroyed()) return;
+
+  const bounds = statusBarWindow.getBounds();
+  configStore.saveStatusBarBounds({
+    x: bounds.x,
+    y: bounds.y
+  });
+  broadcastConfig();
+}
+
+function clampNumber(value, min, max) {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(Math.max(value, min), max);
 }
 
 function maybeNotify(nextSnapshot) {
@@ -527,12 +607,14 @@ function usageRecordsFromQueueResponse(response) {
 
 function attachUsageStats(nextSnapshot) {
   if (!nextSnapshot || !usageStatsStore || !configStore) return nextSnapshot;
+  const usage = usageStatsStore.getTodaySnapshot({
+    enabled: configStore.getPublicConfig().usageStatsEnabled,
+    ...usageStatsRuntime
+  });
+
   return {
     ...nextSnapshot,
-    usage: usageStatsStore.getTodaySnapshot({
-      enabled: configStore.getPublicConfig().usageStatsEnabled,
-      ...usageStatsRuntime
-    })
+    usage
   };
 }
 

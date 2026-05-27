@@ -36,8 +36,6 @@ const elements = {
   opacityLabel: document.querySelector('#opacityLabel'),
   saveConfigButton: document.querySelector('#saveConfigButton'),
   configMessage: document.querySelector('#configMessage'),
-  updatedAt: document.querySelector('#updatedAt'),
-  eventList: document.querySelector('#eventList'),
   refreshButton: document.querySelector('#refreshButton'),
   openApiButton: document.querySelector('#openApiButton')
 };
@@ -78,7 +76,6 @@ const translations = {
     filterUnavailable: '不可用',
     noAccounts: '没有匹配账号',
     refresh: '刷新',
-    activity: '刷新记录',
     configured: '已配置',
     unconfigured: '未配置',
     keepKey: '留空保留当前密钥',
@@ -142,7 +139,6 @@ const translations = {
     filterUnavailable: 'Unavailable',
     noAccounts: 'No matching accounts',
     refresh: 'Refresh',
-    activity: 'Refresh log',
     configured: 'Configured',
     unconfigured: 'Not configured',
     keepKey: 'Leave blank to keep current key',
@@ -280,11 +276,6 @@ function render(snapshot) {
   renderUsage(snapshot.usage);
 
   renderAccounts(snapshot);
-
-  elements.updatedAt.textContent = formatClock(snapshot.updatedAt);
-  elements.eventList.replaceChildren(
-    ...snapshot.events.map((event) => createEventItem(event))
-  );
 }
 
 function renderConfig(config) {
@@ -506,22 +497,6 @@ function accountErrorText(error) {
   return error || t('quotaUnknown');
 }
 
-function createEventItem(event) {
-  const item = document.createElement('li');
-  const copy = document.createElement('div');
-  const title = document.createElement('strong');
-  const detail = document.createElement('span');
-  const time = document.createElement('time');
-
-  title.textContent = eventLabel(event.label);
-  detail.textContent = event.detail;
-  time.textContent = formatClock(event.at);
-
-  copy.append(title, detail);
-  item.append(copy, time);
-  return item;
-}
-
 function formatTime(value) {
   return new Intl.DateTimeFormat(locale(), {
     hour: '2-digit',
@@ -531,14 +506,6 @@ function formatTime(value) {
 
 function formatMaybeTime(value) {
   return value ? formatTime(value) : '--';
-}
-
-function formatClock(value) {
-  return new Intl.DateTimeFormat(locale(), {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).format(new Date(value));
 }
 
 function formatShortDate(value) {
@@ -552,13 +519,6 @@ function formatShortDate(value) {
 
 function formatMaybeShortDate(value) {
   return value ? formatShortDate(value) : '--';
-}
-
-function eventLabel(label) {
-  if (label === 'CLIProxyAPI refresh failed') return t('refreshFailed');
-  if (label === 'CLIProxyAPI refreshed') return t('refreshed');
-  if (label === 'Configuration required') return t('configRequired');
-  return label;
 }
 
 function eventDetail(detail, configured) {

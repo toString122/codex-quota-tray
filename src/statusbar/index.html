@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="./statusbar.css">
   </head>
   <body class="status-good">
-    <button class="status-strip" id="statusStrip" type="button" aria-label="打开 Codex 余量面板">
+    <div class="status-strip" id="statusStrip" aria-label="Codex quota status">
       <span class="status-light" aria-hidden="true"></span>
       <span class="status-lines">
         <span class="status-line">
@@ -23,8 +23,8 @@
           <span id="todayCostText">--</span>
         </span>
       </span>
-      <span class="status-badge" id="statusBadge">OK</span>
-    </button>
+      <button class="status-badge" id="statusBadge" type="button" aria-label="Open Codex quota panel">OK</button>
+    </div>
 
     <script src="./statusbar.js"></script>
   </body>

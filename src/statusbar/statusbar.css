@@ -30,9 +30,11 @@ body {
 body {
   background: transparent;
   font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
+  user-select: none;
 }
 
 .status-strip {
+  -webkit-app-region: drag;
   align-items: center;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, var(--surface-highlight-alpha)), transparent),
@@ -40,7 +42,7 @@ body {
   border: 1px solid rgba(255, 255, 255, var(--surface-border-alpha));
   border-radius: 7px;
   color: var(--ink);
-  cursor: pointer;
+  cursor: grab;
   display: grid;
   gap: 5px;
   grid-template-columns: 7px 1fr 32px;
@@ -48,6 +50,10 @@ body {
   padding: 3px 6px;
   text-align: left;
   width: 100%;
+}
+
+.status-strip:active {
+  cursor: grabbing;
 }
 
 .status-strip:hover {
@@ -105,17 +111,25 @@ body {
 }
 
 .status-badge {
+  -webkit-app-region: no-drag;
+  appearance: none;
   align-items: center;
   background: rgba(255, 255, 255, var(--badge-bg-alpha));
   border: 1px solid rgba(255, 255, 255, var(--badge-border-alpha));
   border-radius: 999px;
   color: var(--accent);
+  cursor: pointer;
   display: flex;
   font-size: 9px;
   font-weight: 900;
   height: 21px;
   justify-content: center;
+  padding: 0;
   width: 32px;
+}
+
+.status-badge:hover {
+  border-color: rgba(255, 255, 255, var(--surface-hover-border-alpha));
 }
 
 .status-good {

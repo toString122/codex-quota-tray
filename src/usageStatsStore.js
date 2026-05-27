@@ -5,6 +5,11 @@ const path = require('node:path');
 
 const STATS_FILE = 'usage-stats.json';
 const MAX_DAYS_TO_KEEP = 14;
+const GPT_5_5_FALLBACK_PRICE = {
+  inputUsdPerMillion: 5,
+  cachedInputUsdPerMillion: 0.5,
+  outputUsdPerMillion: 30
+};
 
 const MODEL_PRICE_RULES = [
   {
@@ -14,6 +19,12 @@ const MODEL_PRICE_RULES = [
     outputUsdPerMillion: 6
   },
   {
+    pattern: /(?:codex|code)[-_ ]?review|review[-_ ]?(?:codex|code)/i,
+    inputUsdPerMillion: 1.75,
+    cachedInputUsdPerMillion: 0.175,
+    outputUsdPerMillion: 14
+  },
+  {
     pattern: /gpt-5\.5.*pro/i,
     inputUsdPerMillion: 30,
     cachedInputUsdPerMillion: 30,
@@ -21,9 +32,7 @@ const MODEL_PRICE_RULES = [
   },
   {
     pattern: /gpt-5\.5/i,
-    inputUsdPerMillion: 5,
-    cachedInputUsdPerMillion: 0.5,
-    outputUsdPerMillion: 30
+    ...GPT_5_5_FALLBACK_PRICE
   },
   {
     pattern: /gpt-5\.4.*pro/i,
@@ -135,6 +144,7 @@ class UsageStatsStore {
     }
 
     let added = 0;
+
     for (const record of records) {
       if (!record || typeof record !== 'object') continue;
       if (this.addRecord(record)) {
@@ -285,7 +295,8 @@ function outputTokensForBilling(tokens) {
 }
 
 function priceForModel(model) {
-  return MODEL_PRICE_RULES.find((rule) => rule.pattern.test(model)) || null;
+  return MODEL_PRICE_RULES.find((rule) => rule.pattern.test(model)) ||
+    GPT_5_5_FALLBACK_PRICE;
 }
 
 function publicDaySummary(summary) {

@@ -157,6 +157,7 @@ input[type="range"] {
   border-radius: 7px;
   display: flex !important;
   gap: 9px !important;
+  justify-content: center;
   min-height: 38px;
   padding: 0 10px;
 }
@@ -165,6 +166,7 @@ input[type="range"] {
   color: var(--ink) !important;
   font-size: 13px !important;
   line-height: 1.15;
+  white-space: nowrap;
 }
 
 .config-actions {
@@ -373,8 +375,7 @@ h1 {
   color: var(--ink);
 }
 
-.accounts,
-.activity {
+.accounts {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -383,16 +384,6 @@ h1 {
 
 .accounts {
   min-height: 178px;
-}
-
-.activity {
-  flex: 1;
-  min-height: 156px;
-}
-
-.section-title time {
-  color: var(--muted);
-  font: 700 11px/1 "Cascadia Code", Consolas, monospace;
 }
 
 .section-title > span:last-child {
@@ -612,6 +603,10 @@ li time {
   }
 
   .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .toggle-options {
     grid-template-columns: 1fr;
   }
 
