@@ -8,6 +8,7 @@ const {
   Notification,
   Tray,
   ipcMain,
+  powerMonitor,
   screen,
   shell
 } = require('electron');
@@ -70,7 +71,10 @@ if (!gotLock) {
     void updateQuota('startup');
     scheduleAutoRefresh();
     scheduleUsageStatsPolling();
-    screen.on('display-metrics-changed', positionStatusBar);
+    screen.on('display-metrics-changed', restoreStatusBar);
+    screen.on('display-added', restoreStatusBar);
+    screen.on('display-removed', restoreStatusBar);
+    powerMonitor.on('resume', restoreStatusBar);
   });
 }
 
@@ -138,7 +142,7 @@ function createStatusBarWindow() {
     }
   });
 
-  statusBarWindow.setAlwaysOnTop(true, 'status');
+  statusBarWindow.setAlwaysOnTop(true, 'screen-saver');
   statusBarWindow.loadFile(path.join(__dirname, 'statusbar', 'index.html'));
   statusBarWindow.once('ready-to-show', () => {
     positionStatusBar();
@@ -152,6 +156,18 @@ function createStatusBarWindow() {
   statusBarWindow.on('closed', () => {
     statusBarWindow = null;
   });
+}
+
+function restoreStatusBar() {
+  if (!statusBarVisible || !statusBarWindow || statusBarWindow.isDestroyed()) {
+    return;
+  }
+
+  statusBarWindow.setAlwaysOnTop(true, 'screen-saver');
+  positionStatusBar();
+  statusBarWindow.showInactive();
+  statusBarWindow.webContents.send('quota:update', snapshot);
+  statusBarWindow.webContents.send('config:update', configStore.getPublicConfig());
 }
 
 function showWindow() {
@@ -373,7 +389,7 @@ function scheduleStatusBarBoundsSave() {
 function saveStatusBarBounds() {
   if (!configStore || !statusBarWindow || statusBarWindow.isDestroyed()) return;
 
-  const bounds = statusBarWindow.getBounds();
+  const bounds = clampedStatusBarBounds(statusBarWindow.getBounds());
   configStore.saveStatusBarBounds({
     x: bounds.x,
     y: bounds.y
